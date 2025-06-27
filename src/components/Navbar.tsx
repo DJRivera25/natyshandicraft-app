@@ -4,31 +4,31 @@ import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { signOut } from 'next-auth/react';
-import { logout } from '@/features/auth/authSlice'; // adjust path as needed
+import { logout } from '@/features/auth/authSlice';
 import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export default function Navbar() {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
-  const user = useAppSelector((state) => state.auth.user);
-  console.log(`user`, user);
-  const isAuthenticated = !!user;
-  console.log(`isAuthenticated`, isAuthenticated);
-  const cartItems = useAppSelector((state) => state.cart.items);
-  const isAdmin = user?.isAdmin;
+  const [hasMounted, setHasMounted] = useState(false);
 
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
+  const user = useAppSelector((state) => state.auth.user);
+  const isAdmin = user?.isAdmin;
+  const isAuthenticated = !!user;
+
+  const cartItems = useAppSelector((state) => state.cart.items);
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   const handleLogout = async () => {
-    // 1. Clear Redux state
     dispatch(logout());
-
-    // 2. Sign out NextAuth session (this also clears cookies/session)
-    await signOut({ redirect: false }); // prevent automatic redirect
-
-    // 3. Manually redirect
-    router.push('/login'); // or '/' if you want home
+    await signOut({ redirect: false });
+    router.push('/login');
   };
 
   return (
@@ -40,9 +40,7 @@ export default function Navbar() {
         </Link>
 
         {/* Right Links */}
-        {/* Right Links */}
         <div className="flex items-center gap-4">
-          {/* Admin Link */}
           {isAdmin && (
             <Link
               href="/admin"
@@ -52,7 +50,6 @@ export default function Navbar() {
             </Link>
           )}
 
-          {/* Products Link */}
           <Link
             href="/products"
             className="text-sm font-medium text-gray-700 hover:underline"
@@ -63,7 +60,7 @@ export default function Navbar() {
           {/* Cart */}
           <Link href="/cart" className="relative">
             <ShoppingCart className="h-6 w-6 text-gray-700" />
-            {cartCount > 0 && (
+            {hasMounted && cartCount > 0 && (
               <span className="absolute -top-2 -right-2 rounded-full bg-red-500 px-1 text-xs font-bold text-white">
                 {cartCount}
               </span>

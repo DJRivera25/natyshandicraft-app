@@ -15,8 +15,9 @@ export default function ProductsPage() {
   const { products, loading, error } = useAppSelector((state) => state.product);
 
   const [isModalOpen, setIsModalOpen] = useState(false); // ✅ Modal control
-
+  
   useEffect(() => {
+    console.log(`products:`, products)
     dispatch(fetchProductsThunk());
   }, [dispatch]);
 

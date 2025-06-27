@@ -28,7 +28,9 @@ export default function ProductDetailsPage() {
   }, [dispatch, id]);
 
   const handleDelete = async () => {
-    const confirmDelete = confirm('Are you sure you want to delete this product?');
+    const confirmDelete = confirm(
+      'Are you sure you want to delete this product?'
+    );
     if (!confirmDelete) return;
     await dispatch(deleteProductThunk(id));
     router.push('/admin/products');
@@ -64,16 +66,26 @@ export default function ProductDetailsPage() {
       <img
         src={imageUrl || '/placeholder.jpg'}
         alt={name}
-        className="mb-6 w-full max-h-64 rounded object-cover"
+        className="mb-6 max-h-64 w-full rounded object-cover"
       />
       <div className="space-y-2 text-lg">
-        <p><strong>Price:</strong> ₱{price.toFixed(2)}</p>
-        <p><strong>Description:</strong> {description || 'N/A'}</p>
-        <p><strong>Category:</strong> {category || 'N/A'}</p>
-        <p><strong>Initial Quantity:</strong> {initialQuantity}</p>
+        <p>
+          <strong>Price:</strong> ₱{price.toFixed(2)}
+        </p>
+        <p>
+          <strong>Description:</strong> {description || 'N/A'}
+        </p>
+        <p>
+          <strong>Category:</strong> {category || 'N/A'}
+        </p>
+        <p>
+          <strong>Initial Quantity:</strong> {initialQuantity}
+        </p>
         <p>
           <strong>Status:</strong>{' '}
-          <span className={`font-semibold ${inStock ? 'text-green-600' : 'text-red-600'}`}>
+          <span
+            className={`font-semibold ${inStock ? 'text-green-600' : 'text-red-600'}`}
+          >
             {inStock ? 'In Stock' : 'Out of Stock'}
           </span>
         </p>

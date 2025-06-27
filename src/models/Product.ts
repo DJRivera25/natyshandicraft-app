@@ -6,9 +6,10 @@ export interface IProduct extends Document {
   price: number;
   category?: string;
   imageUrl?: string;
-  initialQuantity: number; // Starting stock
-  inStock: boolean; // Whether the product is in stock
-  createdBy?: Types.ObjectId; // Admin or vendor who added the product
+  initialQuantity: number;
+  inStock: boolean;
+  isActive: boolean; // ✅ new field
+  createdBy?: Types.ObjectId;
 }
 
 const ProductSchema = new Schema<IProduct>(
@@ -19,7 +20,8 @@ const ProductSchema = new Schema<IProduct>(
     category: { type: String },
     imageUrl: { type: String },
     initialQuantity: { type: Number, required: true },
-    inStock: { type: Boolean, default: true }, // ✅ Added field
+    inStock: { type: Boolean, default: true },
+    isActive: { type: Boolean, default: true }, // ✅ added here
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }

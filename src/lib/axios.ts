@@ -1,8 +1,9 @@
+// lib/axiosInstance.ts
 import axios from 'axios';
 
 const axiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
-  withCredentials: true,
+  withCredentials: true, // ⬅️ this allows sending cookies (including the NextAuth session token)
 });
 
 axiosInstance.interceptors.request.use(
@@ -17,13 +18,6 @@ axiosInstance.interceptors.request.use(
       console.trace('Stack trace of the axios call with undefined URL:');
     } else {
       console.log(`📡 [AXIOS] ${method} ${fullUrl}`);
-    }
-
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
     }
 
     return config;

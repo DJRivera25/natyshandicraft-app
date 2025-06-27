@@ -1,7 +1,6 @@
 'use client';
 
 import { useAppDispatch } from '@/store/hooks';
-import { addToCart } from '@/features/cart/cartSlice';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/types/product';
@@ -9,6 +8,7 @@ import {
   deleteProductThunk,
   toggleStockThunk,
 } from '@/features/product/productThunk';
+import { addToCartThunk } from '@/features/cart/cartThunk';
 
 interface Props {
   product: Product;
@@ -24,10 +24,11 @@ export default function ProductCard({ product, onRefresh }: Props) {
 
   const handleAddToCart = () => {
     dispatch(
-      addToCart({
+      addToCartThunk({
         productId: product._id,
         name: product.name,
         price: product.price,
+        image: product.imageUrl,
         quantity: 1,
       })
     );
@@ -52,8 +53,17 @@ export default function ProductCard({ product, onRefresh }: Props) {
     onRefresh?.(); // Refresh if provided
   };
 
+  const handleViewProduct = () => {
+    router.push(`/product/${product._id}`);
+  };
+
   return (
-    <div className="rounded-xl border p-4 shadow-sm transition hover:shadow-lg">
+    <div
+      onClick={!isAdmin ? handleViewProduct : undefined}
+      className={`rounded-xl border p-4 shadow-sm transition hover:shadow-lg ${
+        !isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''
+      }`}
+    >
       <img
         src={product.imageUrl ?? '/placeholder.jpg'}
         alt={product.name}
@@ -61,18 +71,25 @@ export default function ProductCard({ product, onRefresh }: Props) {
       />
       <h2 className="text-lg font-semibold">{product.name}</h2>
       <p className="text-gray-600">₱{product.price.toFixed(2)}</p>
-      <p
-        className={`inline-block rounded px-2 py-1 text-sm font-medium ${
-          product.inStock
-            ? 'bg-green-100 text-green-700'
-            : 'bg-red-100 text-red-700'
-        }`}
-      >
-        {product.inStock ? 'In Stock' : 'Out of Stock'}
-      </p>
+
+      {isAdmin && (
+        <p
+          className={`mt-1 inline-block rounded px-2 py-1 text-sm font-medium ${
+            product.inStock
+              ? 'bg-green-100 text-green-700'
+              : 'bg-red-100 text-red-700'
+          }`}
+        >
+          {product.inStock ? 'In Stock' : 'Out of Stock'}
+        </p>
+      )}
+
       {!isAdmin ? (
         <button
-          onClick={handleAddToCart}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleAddToCart();
+          }}
           className="mt-3 w-full rounded bg-violet-600 py-2 text-white hover:bg-violet-700"
         >
           Add to Cart
