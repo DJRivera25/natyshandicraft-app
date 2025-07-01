@@ -89,20 +89,26 @@ export default function MyOrdersPage() {
               ))}
             </ul>
 
-            <div className="flex items-center justify-between">
-              <p className="text-lg font-semibold">
-                Total: ₱{order.totalAmount.toFixed(2)}
-              </p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+  <p className="text-lg font-semibold">
+    Total: ₱{order.totalAmount.toFixed(2)}
+  </p>
 
-              {order.paymentMethod !== 'cod' && order.status === 'pending' && (
-                <button
-                  onClick={() => handlePayNow(order._id, order.totalAmount)}
-                  className="rounded bg-violet-600 px-4 py-2 text-sm text-white hover:bg-violet-700"
-                >
-                  Pay Now
-                </button>
-              )}
-            </div>
+  {order.status === 'paid' && order.paymentMethod !== 'cod' && (
+    <p className="text-sm text-gray-600">
+      Paid via <span className="font-medium capitalize">{order.paymentMethod}</span>
+    </p>
+  )}
+
+  {order.paymentMethod !== 'cod' && order.status === 'pending' && (
+    <button
+      onClick={() => handlePayNow(order._id, order.totalAmount)}
+      className="rounded bg-violet-600 px-4 py-2 text-sm text-white hover:bg-violet-700"
+    >
+      Pay Now
+    </button>
+  )}
+</div>
           </div>
         ))}
       </div>

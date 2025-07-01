@@ -37,3 +37,4 @@ const UserSchema = new Schema<IUser>(
 
 // Prevent model overwrite error in dev
 export const User = models.User || model<IUser>('User', UserSchema);
+  

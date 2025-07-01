@@ -11,6 +11,9 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
+  session: {
+    strategy: 'jwt', // ✅ This enables JWT-based session storage
+  },
   callbacks: {
     async signIn({ user }) {
       try {

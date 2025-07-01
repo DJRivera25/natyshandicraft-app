@@ -161,9 +161,7 @@ export default function CheckoutPage() {
             className="w-full rounded border px-4 py-2"
           >
             <option value="cod">Cash on Delivery</option>
-            <option value="gcash">GCash</option>
-            <option value="bank_transfer">Bank Transfer</option>
-            <option value="card">Credit/Debit Card</option>
+            <option value="online banking">Online Banking</option>
           </select>
         </div>
 

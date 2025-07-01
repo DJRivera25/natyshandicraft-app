@@ -2,14 +2,12 @@
 
 import { useAppDispatch } from '@/store/hooks';
 import { updateProfile } from '@/features/auth/authSlice';
-import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateUserProfile } from '@/utils/api/user';
-import type { Address } from '@/types/user'; // ✅ use centralized Address type
+import type { Address } from '@/types/user';
 
 export default function CompleteProfilePage() {
-  const { data: session, status } = useSession();
   const router = useRouter();
   const dispatch = useAppDispatch();
 
@@ -23,30 +21,11 @@ export default function CompleteProfilePage() {
     postalCode: '',
     country: 'Philippines',
   });
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (status === 'loading') return;
 
-    if (!session) {
-      router.push('/login');
-      return;
-    }
-
-    const a = session.user.address as Address;
-
-    if (
-      session.user.birthDate &&
-      session.user.mobileNumber &&
-      a?.street &&
-      a?.city &&
-      a?.province &&
-      a?.postalCode
-    ) {
-      router.push('/');
-    }
-  }, [session, status, router]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,27 +33,25 @@ export default function CompleteProfilePage() {
     setError('');
 
     try {
-      await updateUserProfile({
-        birthDate,
-        mobileNumber,
-        address,
-      });
+      await updateUserProfile({ birthDate, mobileNumber, address });
 
+      // Update Redux state (optional if middleware always checks token)
       dispatch(updateProfile({ birthDate, mobileNumber, address }));
+
+      // 🔁 Optional session refresh to ensure consistency in client
+      await fetch('/api/auth/session?update');
+
       router.push('/');
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : 'An unknown error occurred'
-      );
+      setError(err instanceof Error ? err.message : 'An unknown error occurred');
       setLoading(false);
     }
   }
 
-  if (status === 'loading') return <p>Loading...</p>;
-
   return (
     <main className="mx-auto max-w-md p-6">
       <h1 className="mb-4 text-2xl font-bold">Complete Your Profile</h1>
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && <p className="text-red-600">{error}</p>}
 
@@ -103,7 +80,6 @@ export default function CompleteProfilePage() {
 
         <fieldset className="space-y-2 border-t pt-4">
           <legend className="text-lg font-semibold">Address</legend>
-
           {[
             { name: 'street', placeholder: 'Street' },
             { name: 'brgy', placeholder: 'Barangay' },
@@ -118,10 +94,7 @@ export default function CompleteProfilePage() {
               placeholder={field.placeholder}
               value={address[field.name as keyof Address]}
               onChange={(e) =>
-                setAddress({
-                  ...address,
-                  [field.name]: e.target.value,
-                })
+                setAddress({ ...address, [field.name]: e.target.value })
               }
               required
               className="block w-full rounded border px-3 py-2"
