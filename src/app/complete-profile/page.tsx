@@ -1,37 +1,48 @@
 'use client';
+
 import { useAppDispatch } from '@/store/hooks';
 import { updateProfile } from '@/features/auth/authSlice';
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { updateUserProfile } from '@/utils/api/user';
+import type { Address } from '@/types/user'; // ✅ use centralized Address type
 
 export default function CompleteProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const dispatch = useAppDispatch(); // ✅ now it is being used
-  // Form state
+  const dispatch = useAppDispatch();
+
   const [birthDate, setBirthDate] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
-  const [address, setAddress] = useState('');
+  const [address, setAddress] = useState<Address>({
+    street: '',
+    brgy: '',
+    city: '',
+    province: '',
+    postalCode: '',
+    country: 'Philippines',
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Redirect if user is not logged in or profile already complete
   useEffect(() => {
-    if (status === 'loading') return; // wait for session to load
+    if (status === 'loading') return;
 
     if (!session) {
-      // Not logged in, redirect to login page
       router.push('/login');
       return;
     }
 
-    // If profile already complete, redirect to homepage or dashboard
+    const a = session.user.address as Address;
+
     if (
       session.user.birthDate &&
       session.user.mobileNumber &&
-      session.user.address
+      a?.street &&
+      a?.city &&
+      a?.province &&
+      a?.postalCode
     ) {
       router.push('/');
     }
@@ -50,13 +61,11 @@ export default function CompleteProfilePage() {
       });
 
       dispatch(updateProfile({ birthDate, mobileNumber, address }));
-      router.push('/'); // redirect
+      router.push('/');
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError('An unknown error occurred');
-      }
+      setError(
+        err instanceof Error ? err.message : 'An unknown error occurred'
+      );
       setLoading(false);
     }
   }
@@ -92,16 +101,33 @@ export default function CompleteProfilePage() {
           />
         </label>
 
-        <label className="block">
-          <span>Address</span>
-          <textarea
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            required
-            rows={3}
-            className="mt-1 block w-full rounded border px-3 py-2"
-          />
-        </label>
+        <fieldset className="space-y-2 border-t pt-4">
+          <legend className="text-lg font-semibold">Address</legend>
+
+          {[
+            { name: 'street', placeholder: 'Street' },
+            { name: 'brgy', placeholder: 'Barangay' },
+            { name: 'city', placeholder: 'City' },
+            { name: 'province', placeholder: 'Province' },
+            { name: 'postalCode', placeholder: 'Postal Code' },
+            { name: 'country', placeholder: 'Country' },
+          ].map((field) => (
+            <input
+              key={field.name}
+              type="text"
+              placeholder={field.placeholder}
+              value={address[field.name as keyof Address]}
+              onChange={(e) =>
+                setAddress({
+                  ...address,
+                  [field.name]: e.target.value,
+                })
+              }
+              required
+              className="block w-full rounded border px-3 py-2"
+            />
+          ))}
+        </fieldset>
 
         <button
           type="submit"

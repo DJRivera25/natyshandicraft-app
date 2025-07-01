@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
+import { loadCartFromStorage, saveCartToStorage } from '@/utils/localStorage';
 type CartItem = {
   productId: string;
   name: string;
@@ -13,7 +13,7 @@ type CartState = {
 };
 
 const initialState: CartState = {
-  items: [],
+  items: loadCartFromStorage(),
 };
 
 const cartSlice = createSlice({
@@ -29,12 +29,14 @@ const cartSlice = createSlice({
       } else {
         state.items.push(action.payload);
       }
+      saveCartToStorage(state.items);
     },
 
     removeFromCart: (state, action: PayloadAction<string>) => {
       state.items = state.items.filter(
         (item) => item.productId !== action.payload
       );
+      saveCartToStorage(state.items);
     },
 
     incrementQuantity: (state, action: PayloadAction<string>) => {
@@ -42,6 +44,7 @@ const cartSlice = createSlice({
       if (item) {
         item.quantity += 1;
       }
+      saveCartToStorage(state.items);
     },
 
     decrementQuantity: (state, action: PayloadAction<string>) => {
@@ -49,10 +52,12 @@ const cartSlice = createSlice({
       if (item && item.quantity > 1) {
         item.quantity -= 1;
       }
+      saveCartToStorage(state.items);
     },
 
     clearCart: (state) => {
       state.items = [];
+      saveCartToStorage(state.items);
     },
   },
 });

@@ -5,6 +5,15 @@ export interface OrderItem {
   quantity: number;
 }
 
+export interface Address {
+  street: string;
+  brgy: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  country?: string;
+}
+
 export interface Order {
   _id: string;
   user: string;
@@ -13,9 +22,13 @@ export interface Order {
   totalAmount: number;
   paymentMethod?: string;
   paidAt?: string;
+  address: Address;
   createdAt: string;
   updatedAt: string;
 }
 
+// For creating an order (client to backend)
 export type CreateOrderInput = Omit<Order, '_id' | 'createdAt' | 'updatedAt'>;
+
+// For updating an order (PATCH/PUT)
 export type UpdateOrderInput = Partial<CreateOrderInput>;

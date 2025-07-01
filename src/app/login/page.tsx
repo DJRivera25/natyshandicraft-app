@@ -29,7 +29,13 @@ export default function LoginPage() {
   return (
     <div>
       <h1>Login</h1>
-      <button onClick={() => signIn('google')}>Sign in with Google</button>
+      <button
+        onClick={() => {
+          signIn('google');
+        }}
+      >
+        Sign in with Google
+      </button>
     </div>
   );
 }

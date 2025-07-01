@@ -7,6 +7,7 @@ import { signOut } from 'next-auth/react';
 import { logout } from '@/features/auth/authSlice';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { clearCart } from '@/features/cart/cartSlice';
 
 export default function Navbar() {
   const dispatch = useAppDispatch();
@@ -19,14 +20,22 @@ export default function Navbar() {
   }, []);
 
   const user = useAppSelector((state) => state.auth.user);
+  const isProfileComplete = useAppSelector(
+    (state) => state.auth.isProfileComplete
+  );
   const isAdmin = user?.isAdmin;
   const isAuthenticated = !!user;
 
   const cartItems = useAppSelector((state) => state.cart.items);
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
+  console.log(`user state:`, user);
+  console.log(`isProfileCompelte`, isProfileComplete);
+
   const handleLogout = async () => {
     dispatch(logout());
+    dispatch(clearCart());
+    localStorage.removeItem(`cartMerged-${user?.id}`);
     await signOut({ redirect: false });
     router.push('/login');
   };
@@ -51,6 +60,13 @@ export default function Navbar() {
           )}
 
           <Link
+            href="/"
+            className="text-sm font-medium text-gray-700 hover:underline"
+          >
+            Home
+          </Link>
+
+          <Link
             href="/products"
             className="text-sm font-medium text-gray-700 hover:underline"
           >
@@ -69,28 +85,36 @@ export default function Navbar() {
 
           {/* Auth Links */}
           {isAuthenticated ? (
-            <>
-              <Link
-                href="/profile"
-                className="text-sm text-gray-700 hover:underline"
-              >
-                {user?.fullName || 'Profile'}
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="text-sm text-red-600 hover:underline"
-              >
-                Logout
-              </button>
-            </>
-          ) : (
-            <Link
-              href="/login"
-              className="text-sm text-gray-700 hover:underline"
-            >
-              Login
-            </Link>
-          )}
+  <>
+    <Link
+      href="/profile"
+      className="text-sm text-gray-700 hover:underline"
+    >
+      {user?.fullName || 'Profile'}
+    </Link>
+
+    <Link
+      href="/order/my-orders"
+      className="text-sm text-gray-700 hover:underline"
+    >
+      My Orders
+    </Link>
+
+    <button
+      onClick={handleLogout}
+      className="text-sm text-red-600 hover:underline"
+    >
+      Logout
+    </button>
+  </>
+) : (
+  <Link
+    href="/login"
+    className="text-sm text-gray-700 hover:underline"
+  >
+    Login
+  </Link>
+)}
         </div>
       </nav>
     </header>

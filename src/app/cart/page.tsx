@@ -4,10 +4,10 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   incrementQuantity,
   decrementQuantity,
-  removeFromCart,
 } from '@/features/cart/cartSlice';
 import {
   fetchCartThunk,
+  removeFromCartThunk,
   saveCartThunk,
 } from '@/features/cart/cartThunk';
 import { useRouter } from 'next/navigation';
@@ -22,9 +22,9 @@ export default function CartPage() {
   const [hasMounted, setHasMounted] = useState(false);
 
   useEffect(() => {
-    console.log(`items`, items)
+    console.log(`items`, items);
     setHasMounted(true);
-    dispatch(fetchCartThunk());
+    if (userId) dispatch(fetchCartThunk());
   }, [dispatch]);
 
   const totalPrice = items.reduce(
@@ -92,7 +92,7 @@ export default function CartPage() {
 
             {/* Remove Button */}
             <button
-              onClick={() => dispatch(removeFromCart(item.productId))}
+              onClick={() => dispatch(removeFromCartThunk(item.productId))}
               className="rounded bg-red-500 px-4 py-1 text-white hover:bg-red-600"
             >
               Remove

@@ -63,8 +63,8 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
             type === 'checkbox'
               ? checked
               : name === 'price' || name === 'initialQuantity'
-              ? parseFloat(value)
-              : value,
+                ? parseFloat(value)
+                : value,
         }));
       }
     } else if (target instanceof HTMLTextAreaElement) {

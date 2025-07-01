@@ -1,4 +1,3 @@
-// app/components/AuthSyncer.tsx
 'use client';
 
 import { useSession } from 'next-auth/react';
@@ -14,15 +13,18 @@ export default function AuthSyncer() {
     if (status === 'loading') return;
 
     if (session?.user) {
+      const { id, email, fullName, isAdmin, mobileNumber, birthDate, address } =
+        session.user;
+
       dispatch(
         login({
-          id: session.user.id,
-          email: session.user.email!,
-          fullName: session.user.fullName!,
-          isAdmin: session.user.isAdmin!,
-          mobileNumber: session.user.mobileNumber ?? undefined,
-          address: session.user.address ?? undefined,
-          birthDate: session.user.birthDate ?? undefined,
+          id,
+          email: email!,
+          fullName: fullName!,
+          isAdmin: isAdmin!,
+          mobileNumber: mobileNumber ?? undefined,
+          birthDate: birthDate ?? undefined,
+          address: address ?? undefined, // ✅ structured address object
         })
       );
     } else {

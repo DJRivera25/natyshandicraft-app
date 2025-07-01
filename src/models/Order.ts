@@ -11,19 +11,27 @@ export interface IOrder extends Document {
   user: Types.ObjectId;
   items: IOrderItem[];
   totalAmount: number;
-  status: 'pending' | 'paid' | 'cancelled';
+  status?: 'pending' | 'paid' | 'cancelled';
   paymentMethod?: string;
   paidAt?: Date;
+  address: {
+    street: string;
+    brgy: string; // ✅ added
+    city: string;
+    province: string;
+    postalCode: string;
+    country: string;
+  };
 }
 
 const OrderItemSchema = new Schema<IOrderItem>(
   {
     product: { type: Schema.Types.ObjectId, ref: 'Product', required: true },
-    name: { type: String, required: true }, // to preserve info even if product gets deleted
+    name: { type: String, required: true },
     price: { type: Number, required: true },
     quantity: { type: Number, required: true },
   },
-  { _id: false } // we don't need ObjectIds for sub-docs
+  { _id: false }
 );
 
 const OrderSchema = new Schema<IOrder>(
@@ -38,6 +46,14 @@ const OrderSchema = new Schema<IOrder>(
     },
     paymentMethod: { type: String },
     paidAt: { type: Date },
+    address: {
+      street: { type: String, required: true },
+      brgy: { type: String, required: true }, // ✅ added
+      city: { type: String, required: true },
+      province: { type: String, required: true },
+      postalCode: { type: String, required: true },
+      country: { type: String, default: 'Philippines' },
+    },
   },
   { timestamps: true }
 );

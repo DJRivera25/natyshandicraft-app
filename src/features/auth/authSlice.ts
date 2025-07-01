@@ -1,5 +1,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
+type Address = {
+  street: string;
+  brgy: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  country: string;
+};
+
 type User = {
   id: string;
   email: string;
@@ -7,7 +16,7 @@ type User = {
   fullName: string;
   birthDate?: string;
   isAdmin: boolean;
-  address?: string;
+  address?: Address;
 };
 
 type AuthState = {
@@ -21,7 +30,15 @@ const initialState: AuthState = {
 };
 
 const isProfileComplete = (user: Partial<User>) => {
-  return Boolean(user.address && user.mobileNumber && user.birthDate);
+  const addr = user.address;
+  return Boolean(
+    user.birthDate &&
+      user.mobileNumber &&
+      addr?.street &&
+      addr?.city &&
+      addr?.province &&
+      addr?.postalCode
+  );
 };
 
 const authSlice = createSlice({
@@ -34,6 +51,7 @@ const authSlice = createSlice({
     },
     logout: (state) => {
       state.user = null;
+      state.isProfileComplete = false;
     },
     updateProfile: (state, action: PayloadAction<Partial<User>>) => {
       if (state.user) {

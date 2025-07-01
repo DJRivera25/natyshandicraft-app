@@ -23,9 +23,10 @@ export async function GET(
   }
 
   try {
-    const order = await Order.findById(orderId)
-      .populate('user', 'fullName email') // Optional
-  
+    const order = await Order.findById(orderId).populate(
+      'user',
+      'fullName email'
+    ); // Optional
 
     if (!order) {
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });

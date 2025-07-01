@@ -6,7 +6,14 @@ export interface IUser extends Document {
   fullName: string;
   birthDate?: Date;
   isAdmin: boolean;
-  address?: string;
+  address?: {
+    street: string;
+    brgy: string;
+    city: string;
+    province: string;
+    postalCode: string;
+    country: string;
+  };
 }
 
 const UserSchema = new Schema<IUser>(
@@ -14,9 +21,16 @@ const UserSchema = new Schema<IUser>(
     email: { type: String, required: true, unique: true },
     mobileNumber: { type: String, unique: true },
     fullName: { type: String, required: true },
-    birthDate: { type: Date }, // 🟢 added default
+    birthDate: { type: Date },
     isAdmin: { type: Boolean, default: false },
-    address: { type: String },
+    address: {
+      street: { type: String },
+      brgy: { type: String },
+      city: { type: String },
+      province: { type: String },
+      postalCode: { type: String },
+      country: { type: String, default: 'Philippines' },
+    },
   },
   { timestamps: true }
 );

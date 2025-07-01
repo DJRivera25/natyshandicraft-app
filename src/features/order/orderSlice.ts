@@ -1,4 +1,3 @@
-// src/features/order/orderSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Order } from '@/types/order';
 
@@ -23,6 +22,9 @@ const orderSlice = createSlice({
     setOrders: (state, action: PayloadAction<Order[]>) => {
       state.orders = action.payload;
     },
+    addOrder: (state, action: PayloadAction<Order>) => {
+      state.orders.unshift(action.payload);
+    },
     setSelectedOrder: (state, action: PayloadAction<Order | null>) => {
       state.selectedOrder = action.payload;
     },
@@ -42,6 +44,7 @@ const orderSlice = createSlice({
 
 export const {
   setOrders,
+  addOrder,
   setSelectedOrder,
   setLoading,
   setError,

@@ -2,6 +2,15 @@
 
 import type { JWT as DefaultJWT } from 'next-auth/jwt';
 
+interface Address {
+  street: string;
+  brgy: string;
+  city: string;
+  province: string;
+  postalCode: string;
+  country: string;
+}
+
 declare module 'next-auth' {
   interface Session {
     user: {
@@ -12,8 +21,8 @@ declare module 'next-auth' {
       isAdmin?: boolean;
       fullName?: string | null;
       mobileNumber?: string | null;
-      address?: string | null;
       birthDate?: string | null;
+      address?: Address | null;
     };
   }
 }
@@ -24,7 +33,7 @@ declare module 'next-auth/jwt' {
     isAdmin?: boolean;
     fullName?: string | null;
     mobileNumber?: string | null;
-    address?: string | null;
     birthDate?: string | null;
+    address?: Address | null;
   }
 }

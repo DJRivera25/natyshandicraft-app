@@ -1,4 +1,4 @@
-import axiosInstance from '@/lib/axios';
+import axiosInstance from '@/utils/axios';
 import type { CreateOrderInput, Order } from '@/types/order';
 
 /**

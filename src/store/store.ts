@@ -15,7 +15,7 @@ import storage from 'redux-persist/lib/storage';
 import cartReducer from '@/features/cart/cartSlice';
 import authReducer from '@/features/auth/authSlice';
 import productReducer from '@/features/product/productSlice';
-import orderReducer from '@/features/order/orderSlice'
+import orderReducer from '@/features/order/orderSlice';
 
 const rootReducer = combineReducers({
   cart: cartReducer,
