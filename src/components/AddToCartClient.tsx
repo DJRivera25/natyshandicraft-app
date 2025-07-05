@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAppDispatch } from '@/store/hooks';
 import { addToCartThunk } from '@/features/cart/cartThunk';
+import QuantitySelector from './QuantitySelector';
 
 interface Props {
   product: {
@@ -32,23 +33,15 @@ export default function AddToCartClient({ product }: Props) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-3">
-        <label htmlFor="quantity" className="text-sm font-medium">
-          Quantity:
-        </label>
-        <input
-          id="quantity"
-          type="number"
-          min={1}
-          value={quantity}
-          onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
-          className="w-20 rounded border px-2 py-1 text-center"
-        />
-      </div>
+    <div className="flex flex-col md:flex-row items-center gap-4">
+      {/* Quantity Adjuster */}
+      <QuantitySelector quantity={quantity} setQuantity={setQuantity} />
+
+      {/* Add to Cart Button */}
       <button
         onClick={handleAddToCart}
-        className="w-full rounded bg-violet-600 py-2 text-white transition hover:bg-violet-700"
+        className="inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-amber-600 px-6 py-3 text-lg font-semibold text-white shadow-md transition-all hover:bg-amber-700 hover:scale-105 focus:outline-none focus-visible:ring-4 focus-visible:ring-amber-400"
+        aria-label={`Add ${quantity} ${product.name} to cart`}
       >
         Add to Cart
       </button>

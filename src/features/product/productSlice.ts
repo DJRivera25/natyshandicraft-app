@@ -4,15 +4,23 @@ import type { Product } from '@/types/product';
 interface ProductState {
   products: Product[];
   selectedProduct: Product | null;
+  total: number;
+  page: number;
+  totalPages: number;
   loading: boolean;
   error: string | null;
+  query: string; // 🔍 added for shared search term
 }
 
 const initialState: ProductState = {
   products: [],
   selectedProduct: null,
+  total: 0,
+  page: 1,
+  totalPages: 1,
   loading: false,
   error: null,
+  query: '', // 🔍 initialized
 };
 
 const productSlice = createSlice({
@@ -23,9 +31,21 @@ const productSlice = createSlice({
       state.loading = true;
       state.error = null;
     },
-    setProducts(state, action: PayloadAction<Product[]>) {
-      state.products = action.payload;
+    setProducts(
+      state,
+      action: PayloadAction<{
+        products: Product[];
+        total: number;
+        page: number;
+        totalPages: number;
+      }>
+    ) {
+      state.products = action.payload.products;
+      state.total = action.payload.total;
+      state.page = action.payload.page;
+      state.totalPages = action.payload.totalPages;
       state.loading = false;
+      state.error = null;
     },
     setSelectedProduct(state, action: PayloadAction<Product>) {
       state.selectedProduct = action.payload;
@@ -53,6 +73,9 @@ const productSlice = createSlice({
       );
       if (index !== -1) state.products[index] = action.payload;
     },
+    setQuery(state, action: PayloadAction<string>) {
+      state.query = action.payload;
+    },
   },
 });
 
@@ -65,6 +88,7 @@ export const {
   removeProduct,
   updateProduct,
   toggleProductStock,
+  setQuery, // ✅ export this
 } = productSlice.actions;
 
 export default productSlice.reducer;

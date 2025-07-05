@@ -1,5 +1,5 @@
-// /lib/authOptions.ts
 import GoogleProvider from 'next-auth/providers/google';
+import FacebookProvider from 'next-auth/providers/facebook'; // ✅ Import Facebook
 import type { NextAuthOptions } from 'next-auth';
 import { connectDB } from '@/lib/db';
 import { User as DBUser } from '@/models/User';
@@ -10,9 +10,13 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+    }),
   ],
   session: {
-    strategy: 'jwt', // ✅ This enables JWT-based session storage
+    strategy: 'jwt',
   },
   callbacks: {
     async signIn({ user }) {

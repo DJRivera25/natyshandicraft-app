@@ -27,7 +27,9 @@ export async function POST(req: NextRequest) {
 
     const xenditInvoiceId = body.id;
     const rawStatus = body.status;
-    const paymentChannel = (body.payment_channel as string | undefined)?.toLowerCase(); // Normalize: e.g. 'gcash'
+    const paymentChannel = (
+      body.payment_channel as string | undefined
+    )?.toLowerCase(); // Normalize: e.g. 'gcash'
 
     if (!xenditInvoiceId || !rawStatus) {
       return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
@@ -51,8 +53,14 @@ export async function POST(req: NextRequest) {
     );
 
     if (!payment) {
-      console.warn('[Xendit Webhook] No payment found for invoice ID:', xenditInvoiceId);
-      return NextResponse.json({ message: 'Payment not found' }, { status: 404 });
+      console.warn(
+        '[Xendit Webhook] No payment found for invoice ID:',
+        xenditInvoiceId
+      );
+      return NextResponse.json(
+        { message: 'Payment not found' },
+        { status: 404 }
+      );
     }
 
     // ✅ Update the related order
@@ -69,11 +77,17 @@ export async function POST(req: NextRequest) {
 
     await Order.findByIdAndUpdate(payment.order, orderUpdateData);
 
-    console.log(`[Webhook] Updated order ${payment.order} with:`, orderUpdateData);
+    console.log(
+      `[Webhook] Updated order ${payment.order} with:`,
+      orderUpdateData
+    );
 
     return NextResponse.json({ message: 'Webhook processed successfully' });
   } catch (error) {
     console.error('[Xendit Webhook Error]', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

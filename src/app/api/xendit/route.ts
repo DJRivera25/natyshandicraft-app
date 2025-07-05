@@ -4,10 +4,14 @@ import { connectDB } from '@/lib/db';
 import { Payment } from '@/models/Payment';
 
 export async function POST(req: NextRequest) {
-  const { orderId, amount, customerName, customerEmail, userId } = await req.json();
+  const { orderId, amount, customerName, customerEmail, userId } =
+    await req.json();
 
   if (!orderId || !amount || !customerName || !customerEmail || !userId) {
-    return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+    return NextResponse.json(
+      { message: 'Missing required fields' },
+      { status: 400 }
+    );
   }
 
   await connectDB();

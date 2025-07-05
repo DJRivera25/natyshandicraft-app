@@ -7,6 +7,7 @@ import {
   apiDeleteProduct,
   apiUpdateProduct,
   apiToggleProductStock,
+  apiSearchProducts,
 } from '@/utils/api/products';
 import {
   startLoading,
@@ -17,18 +18,27 @@ import {
   removeProduct,
   updateProduct,
   toggleProductStock,
+  setQuery,
 } from './productSlice';
 import type { CreateProductInput, UpdateProductInput } from '@/types/product';
+import type { SearchProductsParams } from '@/utils/api/products';
 
-export const fetchProductsThunk = () => async (dispatch: AppDispatch) => {
-  dispatch(startLoading());
-  try {
-    const products = await apiFetchProducts();
-    dispatch(setProducts(products));
-  } catch {
-    dispatch(setError('Failed to fetch products.'));
-  }
-};
+export const fetchProductsThunk =
+  (page: number = 1, limit: number = 10) =>
+  async (dispatch: AppDispatch) => {
+    dispatch(startLoading());
+    try {
+      const {
+        products,
+        total,
+        page: currentPage,
+        totalPages,
+      } = await apiFetchProducts(page, limit);
+      dispatch(setProducts({ products, total, page: currentPage, totalPages }));
+    } catch {
+      dispatch(setError('Failed to fetch products.'));
+    }
+  };
 
 export const fetchProductByIdThunk =
   (id: string) => async (dispatch: AppDispatch) => {
@@ -74,9 +84,30 @@ export const updateProductThunk =
 export const toggleStockThunk =
   (id: string) => async (dispatch: AppDispatch) => {
     try {
-      await apiToggleProductStock(id); // response is just a message
-      dispatch(toggleProductStock(id)); // just dispatch the id
+      await apiToggleProductStock(id);
+      dispatch(toggleProductStock(id));
     } catch {
       dispatch(setError('Failed to toggle stock status.'));
+    }
+  };
+
+export const searchProductsThunk =
+  (params: SearchProductsParams) => async (dispatch: AppDispatch) => {
+    dispatch(startLoading());
+    try {
+      const {
+        products,
+        total,
+        page: currentPage,
+        totalPages,
+      } = await apiSearchProducts(params);
+
+      dispatch(setProducts({ products, total, page: currentPage, totalPages }));
+
+      if (typeof params.q === 'string') {
+        dispatch(setQuery(params.q)); // ✅ store q in Redux if present
+      }
+    } catch {
+      dispatch(setError('Failed to search products.'));
     }
   };

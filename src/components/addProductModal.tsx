@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
   createProductThunk,
   fetchProductsThunk,
 } from '@/features/product/productThunk';
-import type { CreateProductInput } from '@/types/product';
 import { uploadImage } from '@/utils/api/uploadImage';
+import type { CreateProductInput } from '@/types/product';
 import Image from 'next/image';
 
 interface Props {
@@ -15,17 +15,9 @@ interface Props {
   onClose: () => void;
 }
 
-const inputFields = [
-  { name: 'name', type: 'text', placeholder: 'Product Name' },
-  { name: 'price', type: 'number', placeholder: 'Price' },
-  { name: 'initialQuantity', type: 'number', placeholder: 'Initial Quantity' },
-  { name: 'category', type: 'text', placeholder: 'Category' },
-];
-
-const textareaFields = [{ name: 'description', placeholder: 'Description' }];
-
 export default function AddProductModal({ isOpen, onClose }: Props) {
   const dispatch = useAppDispatch();
+  const { categories } = useAppSelector((state) => state.category);
 
   const [formData, setFormData] = useState<
     Omit<CreateProductInput, 'imageUrl'>
@@ -42,7 +34,9 @@ export default function AddProductModal({ isOpen, onClose }: Props) {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, value, type, checked, files } = e.target as HTMLInputElement;
 
@@ -89,64 +83,115 @@ export default function AddProductModal({ isOpen, onClose }: Props) {
 
   return (
     <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
-      <div className="w-full max-w-md rounded bg-white p-6 shadow-lg">
-        <h2 className="mb-4 text-xl font-semibold">Add New Product</h2>
+      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+        <h2 className="mb-4 text-xl font-semibold text-amber-800">
+          Add New Product
+        </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Mapped inputs */}
-          {inputFields.map(({ name, type, placeholder }) => (
+          {/* Name */}
+          <div>
+            <label className="block mb-1 text-sm font-medium">
+              Product Name *
+            </label>
             <input
-              key={name}
-              type={type}
-              name={name}
-              placeholder={placeholder}
-              value={
-                typeof formData[name as keyof typeof formData] === 'number' &&
-                formData[name as keyof typeof formData] === 0
-                  ? ''
-                  : (formData[name as keyof typeof formData] as string | number)
-              }
+              type="text"
+              name="name"
+              value={formData.name}
               onChange={handleChange}
-              className="w-full rounded border px-3 py-2"
+              className="w-full rounded border px-3 py-2 focus:outline-amber-500"
               required
             />
-          ))}
+          </div>
 
-          {/* Mapped textarea */}
-          {textareaFields.map(({ name, placeholder }) => (
-            <textarea
-              key={name}
-              name={name}
-              placeholder={placeholder}
-              value={formData[name as keyof typeof formData] as string}
+          {/* Price */}
+          <div>
+            <label className="block mb-1 text-sm font-medium">Price *</label>
+            <input
+              type="number"
+              name="price"
+              value={formData.price || ''}
               onChange={handleChange}
-              className="w-full rounded border px-3 py-2"
-              rows={3}
+              className="w-full rounded border px-3 py-2 focus:outline-amber-500"
               required
             />
-          ))}
+          </div>
+
+          {/* Initial Quantity */}
+          <div>
+            <label className="block mb-1 text-sm font-medium">
+              Initial Quantity *
+            </label>
+            <input
+              type="number"
+              name="initialQuantity"
+              value={formData.initialQuantity || ''}
+              onChange={handleChange}
+              className="w-full rounded border px-3 py-2 focus:outline-amber-500"
+              required
+            />
+          </div>
+
+          {/* Category dropdown + free input */}
+          <div>
+            <label className="block mb-1 text-sm font-medium">Category *</label>
+            <input
+              list="category-options"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              placeholder="Choose or enter category"
+              className="w-full rounded border px-3 py-2 focus:outline-amber-500"
+              required
+            />
+            <datalist id="category-options">
+              {categories.map((cat) => (
+                <option key={cat} value={cat} />
+              ))}
+            </datalist>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block mb-1 text-sm font-medium">
+              Description *
+            </label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows={3}
+              className="w-full rounded border px-3 py-2 focus:outline-amber-500"
+              required
+            />
+          </div>
 
           {/* Image Upload */}
-          <input
-            type="file"
-            name="image"
-            accept="image/*"
-            onChange={handleChange}
-            className="w-full"
-            required
-          />
-          {imagePreview && (
-            <div className="relative mt-2 h-40 w-full">
-              <Image
-                src={imagePreview}
-                alt="Preview"
-                fill
-                className="rounded object-cover"
-                unoptimized // 👈 allows blob/object URLs to work
-              />
-            </div>
-          )}
+          <div>
+            <label className="block mb-1 text-sm font-medium">
+              Product Image *
+            </label>
+            <input
+              type="file"
+              name="image"
+              accept="image/*"
+              onChange={handleChange}
+              className="w-full text-sm"
+              required
+            />
+            {imagePreview && (
+              <div className="relative mt-2 h-40 w-full rounded overflow-hidden">
+                <Image
+                  src={imagePreview}
+                  alt="Preview"
+                  fill
+                  className="object-cover"
+                  unoptimized
+                />
+              </div>
+            )}
+          </div>
 
-          {/* In stock */}
+          {/* In Stock Checkbox */}
           <label className="flex items-center space-x-2">
             <input
               type="checkbox"
@@ -154,23 +199,23 @@ export default function AddProductModal({ isOpen, onClose }: Props) {
               checked={formData.inStock}
               onChange={handleChange}
             />
-            <span>In Stock</span>
+            <span className="text-sm">In Stock</span>
           </label>
 
-          {/* Actions */}
+          {/* Buttons */}
           <div className="flex justify-end gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="rounded bg-gray-300 px-4 py-2 hover:bg-gray-400"
+              className="rounded bg-gray-300 px-4 py-2 text-sm hover:bg-gray-400"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+              className="rounded bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700"
             >
-              Add
+              Add Product
             </button>
           </div>
         </form>

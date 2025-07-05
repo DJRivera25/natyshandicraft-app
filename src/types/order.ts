@@ -11,7 +11,7 @@ export interface Address {
   city: string;
   province: string;
   postalCode: string;
-  country?: string;
+  country: string;
 }
 
 export interface Order {

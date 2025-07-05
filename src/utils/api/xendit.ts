@@ -7,7 +7,7 @@ type CreateInvoiceResponse = {
 };
 
 export const apiCreateXenditInvoice = async ({
-  orderId, 
+  orderId,
   userId,
   amount,
   customerName,
@@ -20,7 +20,7 @@ export const apiCreateXenditInvoice = async ({
   customerEmail: string;
 }): Promise<CreateInvoiceResponse> => {
   const res = await axios.post('/xendit', {
-    orderId, 
+    orderId,
     userId,
     amount,
     customerName,

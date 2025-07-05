@@ -1,6 +1,6 @@
 'use client';
 
-import { useAppDispatch } from '@/store/hooks';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Product } from '@/types/product';
@@ -9,21 +9,32 @@ import {
   toggleStockThunk,
 } from '@/features/product/productThunk';
 import { addToCartThunk } from '@/features/cart/cartThunk';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
+import {
+  Pencil,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  ShoppingCart,
+  Check,
+} from 'lucide-react';
 
 interface Props {
   product: Product;
-  onRefresh?: () => void;
 }
 
-export default function ProductCard({ product, onRefresh }: Props) {
+export default function ProductCard({ product }: Props) {
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const router = useRouter();
-
   const isAdmin = session?.user?.isAdmin;
 
-  const handleAddToCart = () => {
-    dispatch(
+  const cartItems = useAppSelector((state) => state.cart.items);
+  const isInCart = cartItems.some((item) => item.productId === product._id);
+
+  const handleAddToCart = async () => {
+    await dispatch(
       addToCartThunk({
         productId: product._id,
         name: product.name,
@@ -34,88 +45,111 @@ export default function ProductCard({ product, onRefresh }: Props) {
     );
   };
 
-  const handleEdit = () => {
-    router.push(`/admin/product/${product._id}`);
-  };
-
+  const handleEdit = () => router.push(`/admin/product/${product._id}`);
   const handleDelete = async () => {
-    const confirmDelete = confirm(
-      'Are you sure you want to delete this product?'
-    );
-    if (!confirmDelete) return;
-
-    await dispatch(deleteProductThunk(product._id));
-    onRefresh?.(); // Refresh if provided
+    if (confirm('Are you sure you want to delete this product?')) {
+      await dispatch(deleteProductThunk(product._id));
+    }
   };
 
   const handleToggleStock = async () => {
     await dispatch(toggleStockThunk(product._id));
-    onRefresh?.(); // Refresh if provided
   };
 
   const handleViewProduct = () => {
-    router.push(`/product/${product._id}`);
+    if (!isAdmin) router.push(`/products/${product._id}`);
   };
 
   return (
-    <div
-      onClick={!isAdmin ? handleViewProduct : undefined}
-      className={`rounded-xl border p-4 shadow-sm transition hover:shadow-lg ${
-        !isAdmin ? 'cursor-pointer hover:bg-gray-50' : ''
+    <motion.div
+      onClick={handleViewProduct}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.03 }}
+      transition={{ type: 'spring', stiffness: 100, damping: 12 }}
+      className={`group mx-auto w-full max-w-[280px] rounded-2xl bg-white border border-amber-200 transition hover:shadow-xl overflow-hidden ${
+        !isAdmin ? 'cursor-pointer' : ''
       }`}
     >
-      <img
-        src={product.imageUrl ?? '/placeholder.jpg'}
-        alt={product.name}
-        className="mb-4 h-40 w-full rounded-md object-cover"
-      />
-      <h2 className="text-lg font-semibold">{product.name}</h2>
-      <p className="text-gray-600">₱{product.price.toFixed(2)}</p>
+      <div className="relative w-full h-48 bg-amber-50">
+        <Image
+          src={product.imageUrl ?? '/placeholder.jpg'}
+          alt={product.name}
+          fill
+          className="object-cover"
+        />
+      </div>
 
-      {isAdmin && (
-        <p
-          className={`mt-1 inline-block rounded px-2 py-1 text-sm font-medium ${
-            product.inStock
-              ? 'bg-green-100 text-green-700'
-              : 'bg-red-100 text-red-700'
-          }`}
-        >
-          {product.inStock ? 'In Stock' : 'Out of Stock'}
+      <div className="p-4 space-y-2">
+        <h2 className="text-base font-semibold text-amber-900 line-clamp-2">
+          {product.name}
+        </h2>
+        <p className="text-lg font-bold text-amber-700">
+          ₱{product.price.toFixed(2)}
         </p>
-      )}
 
-      {!isAdmin ? (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            handleAddToCart();
-          }}
-          className="mt-3 w-full rounded bg-violet-600 py-2 text-white hover:bg-violet-700"
-        >
-          Add to Cart
-        </button>
-      ) : (
-        <div className="mt-4 space-y-2">
+        {!isAdmin ? (
           <button
-            onClick={handleEdit}
-            className="w-full rounded bg-blue-600 py-2 text-white hover:bg-blue-700"
+            onClick={(e) => {
+              e.stopPropagation();
+              if (!isInCart) handleAddToCart();
+            }}
+            disabled={isInCart}
+            className={`mt-4 w-full rounded-full px-4 py-2 text-sm font-semibold flex items-center justify-center gap-2 transition duration-300 shadow ${
+              isInCart
+                ? 'bg-green-100 text-green-700 cursor-not-allowed'
+                : 'bg-amber-600 text-white hover:bg-amber-700'
+            }`}
           >
-            Edit
+            {isInCart ? (
+              <>
+                <Check size={18} /> Added to Cart
+              </>
+            ) : (
+              <>
+                <ShoppingCart size={18} /> Add to Cart
+              </>
+            )}
           </button>
-          <button
-            onClick={handleDelete}
-            className="w-full rounded bg-red-600 py-2 text-white hover:bg-red-700"
-          >
-            Delete
-          </button>
-          <button
-            onClick={handleToggleStock}
-            className="w-full rounded bg-yellow-500 py-2 text-white hover:bg-yellow-600"
-          >
-            {product.inStock ? 'Mark as Out of Stock' : 'Mark as In Stock'}
-          </button>
-        </div>
-      )}
-    </div>
+        ) : (
+          <div className="mt-4 flex items-center justify-between text-gray-600">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEdit();
+              }}
+              className="hover:text-blue-600"
+              title="Edit"
+            >
+              <Pencil size={18} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete();
+              }}
+              className="hover:text-red-600"
+              title="Delete"
+            >
+              <Trash2 size={18} />
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleToggleStock();
+              }}
+              className="hover:text-yellow-600"
+              title={product.inStock ? 'Mark Out of Stock' : 'Mark In Stock'}
+            >
+              {product.inStock ? (
+                <XCircle size={18} />
+              ) : (
+                <CheckCircle size={18} />
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    </motion.div>
   );
 }

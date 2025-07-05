@@ -12,6 +12,8 @@ import {
 } from '@/features/cart/cartThunk';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Trash2, Plus, Minus } from 'lucide-react';
+import { useHasMounted } from '@/utils/useHasMounted';
 
 export default function CartPage() {
   const { items } = useAppSelector((state) => state.cart);
@@ -19,13 +21,18 @@ export default function CartPage() {
   const userId = user?.id;
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const [hasMounted, setHasMounted] = useState(false);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    console.log(`items`, items);
-    setHasMounted(true);
     if (userId) dispatch(fetchCartThunk());
-  }, [dispatch]);
+  }, [dispatch, userId]);
+
+  useEffect(() => {
+    const animateSteps = () => {
+      setTimeout(() => setProgress(0), 1000);
+    };
+    animateSteps();
+  }, []);
 
   const totalPrice = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -38,78 +45,151 @@ export default function CartPage() {
     router.push('/order');
   };
 
+  const hasMounted = useHasMounted();
   if (!hasMounted) return null;
 
   if (items.length === 0) {
     return (
-      <div className="p-8 text-center text-gray-500">Your cart is empty.</div>
+      <div className="p-10 text-center text-gray-500 text-lg">
+        Your cart is empty.
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-3xl font-bold">Your Cart</h1>
-      <div className="space-y-6">
-        {items.map((item) => (
+    <main className="mx-auto max-w-7xl px-4 py-10">
+      {/* Progress Bar */}
+      <div className="mb-8">
+        <div className="relative w-full h-6">
+          <div className="absolute top-1/2 left-0 w-full h-2 bg-gray-200 rounded-full -translate-y-1/2" />
           <div
-            key={item.productId}
-            className="flex flex-col items-start gap-4 rounded border p-4 md:flex-row md:items-center md:justify-between"
-          >
-            {/* Product Image and Name */}
-            <div className="flex items-center gap-4">
+            className="absolute top-1/2 left-0 h-2 bg-amber-500 transition-all duration-700 ease-in-out rounded-full -translate-y-1/2"
+            style={{ width: `${progress}%` }}
+          />
+
+          {/* Step Indicators */}
+          {[0, 50, 100].map((left, index) => (
+            <div
+              key={index}
+              className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center border-2 shadow-sm
+                absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-colors duration-700
+                ${progress >= left ? 'bg-amber-600 border-amber-600 text-white' : 'bg-white border-gray-400 text-gray-400'}`}
+              style={{ left: `${left}%` }}
+            >
+              {index + 1}
+            </div>
+          ))}
+        </div>
+      </div>
+      <h1 className="text-3xl font-bold mb-8 text-amber-900">Your Cart</h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
+        {/* Cart Items */}
+        <div className="space-y-5">
+          {items.map((item) => (
+            <div
+              key={item.productId}
+              className="flex items-center gap-5 rounded-xl border border-amber-200 bg-white px-4 py-4 shadow-sm hover:shadow-md transition"
+            >
+              {/* Image */}
               <img
                 src={item.image}
                 alt={item.name}
-                className="h-20 w-20 rounded object-cover"
+                className="h-20 w-20 rounded object-cover border"
               />
-              <div>
-                <h2 className="text-xl font-semibold">{item.name}</h2>
-                <p className="text-gray-600">₱{item.price.toFixed(2)}</p>
+
+              {/* Info + Controls */}
+              <div className="flex flex-col justify-between w-full h-full">
+                {/* Product Name */}
+                <div className="flex justify-between items-center mb-1">
+                  <p className="text-base font-medium text-amber-900 truncate w-40">
+                    {item.name}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    ₱{item.price.toFixed(2)}{' '}
+                    <span className="text-xs text-gray-400">each</span>
+                  </p>
+                </div>
+
+                {/* Quantity + Subtotal + Remove */}
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                  {/* Quantity Controls */}
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() =>
+                        dispatch(decrementQuantity(item.productId))
+                      }
+                      className="rounded bg-gray-100 p-1 hover:bg-gray-200"
+                    >
+                      <Minus size={14} />
+                    </button>
+                    <span className="w-6 text-center font-semibold text-amber-800">
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() =>
+                        dispatch(incrementQuantity(item.productId))
+                      }
+                      className="rounded bg-gray-100 p-1 hover:bg-gray-200"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
+
+                  {/* Subtotal */}
+                  <span className="text-sm font-medium text-amber-700">
+                    Subtotal: ₱{(item.price * item.quantity).toFixed(2)}
+                  </span>
+
+                  {/* Remove */}
+                  <button
+                    onClick={() =>
+                      dispatch(removeFromCartThunk(item.productId))
+                    }
+                    className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1"
+                  >
+                    <Trash2 size={14} /> Remove
+                  </button>
+                </div>
               </div>
             </div>
+          ))}
+        </div>
 
-            {/* Quantity Controls */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => dispatch(decrementQuantity(item.productId))}
-                className="rounded bg-gray-300 px-3 py-1 hover:bg-gray-400"
-              >
-                -
-              </button>
-              <span className="min-w-[2rem] text-center">{item.quantity}</span>
-              <button
-                onClick={() => dispatch(incrementQuantity(item.productId))}
-                className="rounded bg-gray-300 px-3 py-1 hover:bg-gray-400"
-              >
-                +
-              </button>
+        {/* Order Summary */}
+        <aside className="sticky top-24 self-start h-fit bg-amber-100 p-6 rounded-xl shadow-md border border-amber-200">
+          <h2 className="text-xl font-bold text-amber-900 mb-4">
+            Order Summary
+          </h2>
+
+          <div className="space-y-3 text-gray-800 text-sm">
+            <div className="flex justify-between">
+              <span>Total Items</span>
+              <span className="font-medium">
+                {items.reduce((sum, item) => sum + item.quantity, 0)}
+              </span>
             </div>
-
-            {/* Subtotal */}
-            <p className="text-lg font-medium">
-              Subtotal: ₱{(item.price * item.quantity).toFixed(2)}
-            </p>
-
-            {/* Remove Button */}
-            <button
-              onClick={() => dispatch(removeFromCartThunk(item.productId))}
-              className="rounded bg-red-500 px-4 py-1 text-white hover:bg-red-600"
-            >
-              Remove
-            </button>
+            <div className="flex justify-between border-t pt-2 font-semibold text-amber-800">
+              <span>Total Price</span>
+              <span>₱{totalPrice.toFixed(2)}</span>
+            </div>
           </div>
-        ))}
-      </div>
 
-      {/* Total & Checkout */}
-      <div className="mt-8 flex flex-col items-end gap-4">
-        <p className="text-xl font-semibold">Total: ₱{totalPrice.toFixed(2)}</p>
-        <button
-          onClick={handleCheckout}
-          className="rounded bg-violet-600 px-6 py-2 text-white hover:bg-violet-700"
-        >
-          Proceed to Checkout
-        </button>
+          <button
+            onClick={handleCheckout}
+            className="mt-6 w-full rounded-lg bg-amber-700 px-4 py-2 text-white font-semibold hover:bg-amber-800 transition"
+          >
+            Proceed to Checkout
+          </button>
+
+          {/* 👇 Back to Shop Button 👇 */}
+          <button
+            onClick={() => router.push('/products')}
+            className="mt-4 w-full rounded-md border border-amber-400 text-amber-600 py-1.5 text-sm hover:bg-amber-50 transition"
+          >
+            ← Back to Shop
+          </button>
+        </aside>
       </div>
     </main>
   );
