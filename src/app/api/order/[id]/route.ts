@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { Order } from '@/models/Order';
 import { getServerSession } from 'next-auth';
@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/authOptions';
 import { Types } from 'mongoose';
 
 export async function GET(
-  req: NextRequest,
+  req: Request,
   { params }: { params: { id: string } }
 ) {
   await connectDB();
@@ -26,12 +26,13 @@ export async function GET(
     const order = await Order.findById(orderId).populate(
       'user',
       'fullName email'
-    );
+    ); // Optional
 
     if (!order) {
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
+    // If not admin, ensure user owns the order
     const isAdmin = session.user.isAdmin;
     if (!isAdmin && String(order.user._id) !== session.user.id) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
