@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { Order } from '@/models/Order';
 import { getServerSession } from 'next-auth';
@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/authOptions';
 import { Types } from 'mongoose';
 
 export async function GET(
-  req: NextRequest,
+  req: Request,
   { params }: { params: { id: string } }
 ) {
   await connectDB();
