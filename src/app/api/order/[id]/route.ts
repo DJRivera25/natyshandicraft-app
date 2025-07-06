@@ -5,9 +5,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { Types } from 'mongoose';
 
+// ✅ Use official App Router type for context
 export async function GET(
   req: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Record<'id', string> } // ✅ THIS IS THE VALID TYPE
 ) {
   await connectDB();
   const session = await getServerSession(authOptions);
