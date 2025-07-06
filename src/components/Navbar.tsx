@@ -54,8 +54,8 @@ export default function Navbar() {
     dispatch(logout());
     dispatch(clearCart());
     localStorage.removeItem(`cartMerged-${user?.id}`);
-    await signOut({ redirect: false });
-    router.push('/login');
+    await signOut({ callbackUrl: '/login' });
+    console.log(`user when logout`, user);
   };
 
   const handleSearchSubmit = async (e: React.FormEvent) => {
