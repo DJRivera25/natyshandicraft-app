@@ -5,10 +5,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { Types } from 'mongoose';
 
-export async function GET(
-  req: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: Request, context: { params: { id: string } }) {
   await connectDB();
   const session = await getServerSession(authOptions);
 
@@ -16,7 +13,7 @@ export async function GET(
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const orderId = params.id;
+  const orderId = context.params.id;
 
   if (!Types.ObjectId.isValid(orderId)) {
     return NextResponse.json({ message: 'Invalid order ID' }, { status: 400 });
@@ -26,13 +23,12 @@ export async function GET(
     const order = await Order.findById(orderId).populate(
       'user',
       'fullName email'
-    ); // Optional
+    );
 
     if (!order) {
       return NextResponse.json({ message: 'Order not found' }, { status: 404 });
     }
 
-    // If not admin, ensure user owns the order
     const isAdmin = session.user.isAdmin;
     if (!isAdmin && String(order.user._id) !== session.user.id) {
       return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
