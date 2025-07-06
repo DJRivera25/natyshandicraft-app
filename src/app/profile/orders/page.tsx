@@ -5,14 +5,19 @@ import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchOrdersThunk } from '@/features/order/orderThunk';
 import { apiCreateXenditInvoice } from '@/utils/api/xendit';
 import { format } from 'date-fns';
+import { useHasMounted } from '@/utils/useHasMounted';
 
 export default function MyOrdersPage() {
   const dispatch = useAppDispatch();
+  const hasMounted = useHasMounted();
+
   const { orders, loading, error } = useAppSelector((state) => state.order);
   const user = useAppSelector((state) => state.auth.user);
 
   useEffect(() => {
-    if (user) dispatch(fetchOrdersThunk());
+    if (user) {
+      dispatch(fetchOrdersThunk());
+    }
   }, [dispatch, user]);
 
   const handlePayNow = async (orderId: string, totalAmount: number) => {
@@ -36,6 +41,9 @@ export default function MyOrdersPage() {
       alert('Failed to initiate payment. Please try again.');
     }
   };
+
+  // 💡 Prevent hydration mismatch
+  if (!hasMounted) return null;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">

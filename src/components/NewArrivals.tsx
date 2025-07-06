@@ -5,14 +5,18 @@ import Link from 'next/link';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchProductsThunk } from '@/features/product/productThunk';
 import ProductCard from './ProductCard';
+import { useHasMounted } from '@/utils/useHasMounted';
 
 export default function NewArrivals() {
   const dispatch = useAppDispatch();
   const { products, loading, error } = useAppSelector((state) => state.product);
+  const hasMounted = useHasMounted();
 
   useEffect(() => {
-    dispatch(fetchProductsThunk(1, 4));
+    dispatch(fetchProductsThunk(1, 4)); // fetch first page, limit 4
   }, [dispatch]);
+
+  if (!hasMounted) return null;
 
   return (
     <section className="w-full bg-white py-10 px-4 flex justify-center">

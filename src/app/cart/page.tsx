@@ -14,6 +14,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Trash2, Plus, Minus } from 'lucide-react';
 import { useHasMounted } from '@/utils/useHasMounted';
+import Image from 'next/image';
 
 export default function CartPage() {
   const dispatch = useAppDispatch();
@@ -95,9 +96,11 @@ export default function CartPage() {
               key={item.productId}
               className="flex items-center gap-5 rounded-xl border border-amber-200 bg-white px-4 py-4 shadow-sm hover:shadow-md transition"
             >
-              <img
+              <Image
                 src={item.image}
                 alt={item.name}
+                width={80}
+                height={80}
                 className="h-20 w-20 rounded object-cover border"
               />
 
