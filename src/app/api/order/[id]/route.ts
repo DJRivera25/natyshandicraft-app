@@ -5,14 +5,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { Types } from 'mongoose';
 
-interface Params {
-  params: {
-    id: string;
-  };
-}
-
-// Correct route handler signature
-export async function GET(req: NextRequest, { params }: Params) {
+export async function GET(
+  req: NextRequest,
+  context: { params: { id: string } }
+) {
   await connectDB();
   const session = await getServerSession(authOptions);
 
@@ -20,7 +16,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const orderId = params.id;
+  const orderId = context.params.id;
 
   if (!Types.ObjectId.isValid(orderId)) {
     return NextResponse.json({ message: 'Invalid order ID' }, { status: 400 });
