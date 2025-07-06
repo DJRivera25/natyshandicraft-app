@@ -12,6 +12,7 @@ import { usePathname } from 'next/navigation';
 export default function RootLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isHomePage = pathname === '/';
+  const isLoginPage = pathname === '/login';
   const isProductDetailPage = /^\/products\/[^/]+$/.test(pathname); // e.g. /products/abc123
 
   useEffect(() => {
@@ -32,12 +33,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       >
         <Providers>
           <Navbar />
-          {!isHomePage && !isProductDetailPage && (
+          {!isLoginPage && !isHomePage && !isProductDetailPage && (
             <div className="pt-4 px-4 md:px-6">
               <Breadcrumb />
             </div>
           )}
-          <div className={isHomePage ? '' : 'pt-4'}>{children}</div>
+          <div className={isHomePage ? '' : ''}>{children}</div>
         </Providers>
       </body>
     </html>
