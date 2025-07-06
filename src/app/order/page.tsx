@@ -11,11 +11,13 @@ import { Pencil } from 'lucide-react';
 import { useHasMounted } from '@/utils/useHasMounted';
 
 export default function CheckoutPage() {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const hasMounted = useHasMounted();
+
   const { items } = useAppSelector((state) => state.cart);
   const user = useAppSelector((state) => state.auth.user);
   const userAddress = user?.address;
-  const router = useRouter();
-  const dispatch = useAppDispatch();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -31,11 +33,6 @@ export default function CheckoutPage() {
     postalCode: userAddress?.postalCode || '',
     country: userAddress?.country || 'Philippines',
   });
-
-  const totalAmount = items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
 
   useEffect(() => {
     const animateSteps = () => {
@@ -57,6 +54,14 @@ export default function CheckoutPage() {
       });
     }
   }, [userAddress]);
+
+  // 🛡️ Guard against SSR mismatch and undefined array
+  if (!hasMounted || !Array.isArray(items)) return null;
+
+  const totalAmount = items.reduce(
+    (sum, item) => sum + item.price * item.quantity,
+    0
+  );
 
   const handlePlaceOrder = async () => {
     if (!user) return setError('Please log in to place your order.');
@@ -117,12 +122,7 @@ export default function CheckoutPage() {
     setLoading(false);
   };
 
-  const hasMounted = useHasMounted();
-  if (!hasMounted) return null;
-
-  if (!items.length) {
-    return null;
-  }
+  if (!items.length) return null;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-10">

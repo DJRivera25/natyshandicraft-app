@@ -16,15 +16,20 @@ import { Trash2, Plus, Minus } from 'lucide-react';
 import { useHasMounted } from '@/utils/useHasMounted';
 
 export default function CartPage() {
+  const dispatch = useAppDispatch();
+  const router = useRouter();
+  const hasMounted = useHasMounted();
+
   const { items } = useAppSelector((state) => state.cart);
   const user = useAppSelector((state) => state.auth.user);
   const userId = user?.id;
-  const dispatch = useAppDispatch();
-  const router = useRouter();
+
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (userId) dispatch(fetchCartThunk());
+    if (userId) {
+      dispatch(fetchCartThunk());
+    }
   }, [dispatch, userId]);
 
   useEffect(() => {
@@ -33,6 +38,9 @@ export default function CartPage() {
     };
     animateSteps();
   }, []);
+
+  // 🚨 Early return to prevent hydration issues
+  if (!hasMounted || !Array.isArray(items)) return null;
 
   const totalPrice = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -44,9 +52,6 @@ export default function CartPage() {
     dispatch(saveCartThunk({ user: userId, items }));
     router.push('/order');
   };
-
-  const hasMounted = useHasMounted();
-  if (!hasMounted) return null;
 
   if (items.length === 0) {
     return (
@@ -66,8 +71,6 @@ export default function CartPage() {
             className="absolute top-1/2 left-0 h-2 bg-amber-500 transition-all duration-700 ease-in-out rounded-full -translate-y-1/2"
             style={{ width: `${progress}%` }}
           />
-
-          {/* Step Indicators */}
           {[0, 50, 100].map((left, index) => (
             <div
               key={index}
@@ -81,6 +84,7 @@ export default function CartPage() {
           ))}
         </div>
       </div>
+
       <h1 className="text-3xl font-bold mb-8 text-amber-900">Your Cart</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
@@ -91,16 +95,13 @@ export default function CartPage() {
               key={item.productId}
               className="flex items-center gap-5 rounded-xl border border-amber-200 bg-white px-4 py-4 shadow-sm hover:shadow-md transition"
             >
-              {/* Image */}
               <img
                 src={item.image}
                 alt={item.name}
                 className="h-20 w-20 rounded object-cover border"
               />
 
-              {/* Info + Controls */}
               <div className="flex flex-col justify-between w-full h-full">
-                {/* Product Name */}
                 <div className="flex justify-between items-center mb-1">
                   <p className="text-base font-medium text-amber-900 truncate w-40">
                     {item.name}
@@ -111,9 +112,7 @@ export default function CartPage() {
                   </p>
                 </div>
 
-                {/* Quantity + Subtotal + Remove */}
                 <div className="flex justify-between items-center text-sm text-gray-600">
-                  {/* Quantity Controls */}
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() =>
@@ -136,12 +135,10 @@ export default function CartPage() {
                     </button>
                   </div>
 
-                  {/* Subtotal */}
                   <span className="text-sm font-medium text-amber-700">
                     Subtotal: ₱{(item.price * item.quantity).toFixed(2)}
                   </span>
 
-                  {/* Remove */}
                   <button
                     onClick={() =>
                       dispatch(removeFromCartThunk(item.productId))
@@ -182,7 +179,6 @@ export default function CartPage() {
             Proceed to Checkout
           </button>
 
-          {/* 👇 Back to Shop Button 👇 */}
           <button
             onClick={() => router.push('/products')}
             className="mt-4 w-full rounded-md border border-amber-400 text-amber-600 py-1.5 text-sm hover:bg-amber-50 transition"

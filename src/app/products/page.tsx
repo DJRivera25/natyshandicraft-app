@@ -10,8 +10,10 @@ import ProductCard from '@/components/ProductCard';
 import AddProductModal from '@/components/addProductModal';
 import PageWrapper from '@/components/PageWrapper';
 import ProductSidebar from '@/components/ProductsFilterSidebar';
+import { useHasMounted } from '@/utils/useHasMounted';
 
 export default function ProductsPage() {
+  const hasMounted = useHasMounted();
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
@@ -77,6 +79,9 @@ export default function ProductsPage() {
     setCategory('All');
     setPage(1);
   };
+
+  // 🛡️ Hydration safety
+  if (!hasMounted || !Array.isArray(products)) return null;
 
   return (
     <PageWrapper>
