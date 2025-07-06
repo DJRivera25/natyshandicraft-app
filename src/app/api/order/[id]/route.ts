@@ -8,7 +8,7 @@ import { Types } from 'mongoose';
 // ✅ Use official App Router type for context
 export async function GET(
   req: NextRequest,
-  context: { params: Record<'id', string> } // ✅ THIS IS THE VALID TYPE
+  context: { params: Promise<Record<'id', string>> } // ✅ THIS IS THE VALID TYPE
 ) {
   await connectDB();
   const session = await getServerSession(authOptions);
@@ -17,7 +17,7 @@ export async function GET(
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const orderId = context.params.id;
+  const orderId = (await context.params).id;
 
   if (!Types.ObjectId.isValid(orderId)) {
     return NextResponse.json({ message: 'Invalid order ID' }, { status: 400 });

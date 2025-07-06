@@ -3,10 +3,8 @@ import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { Product } from '@/models/Product';
 
-export async function GET(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await connectDB();
 
   const { id } = params;
@@ -35,10 +33,8 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await connectDB();
 
   const { id } = params;
@@ -66,10 +62,8 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await connectDB();
 
   const { id } = params;
