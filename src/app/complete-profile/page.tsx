@@ -352,7 +352,7 @@ export default function CompleteProfilePage() {
                   <input
                     type="text"
                     placeholder="Search for your address..."
-                    className="absolute top-22 left-46 z-20 w-[calc(80%-5rem)] max-w-md rounded-md border border-gray-300 bg-white px-4 py-2 shadow-md focus:border-amber-500 focus:ring-amber-200"
+                    className="absolute top-22  left-2 sm:left-46 z-20 w-[calc(100%-2rem)] sm:w-[calc(80%-5rem)] max-w-md rounded-md border border-gray-300 bg-white px-4 py-2 shadow-md focus:border-amber-500 focus:ring-amber-200"
                   />
                 </Autocomplete>
               )}
@@ -360,7 +360,7 @@ export default function CompleteProfilePage() {
               <button
                 type="button"
                 onClick={() => setShowSearch(!showSearch)}
-                className="absolute top-11 left-46 z-30 bg-white p-2 rounded-full shadow hover:bg-gray-100"
+                className="absolute top-11 left-50 sm:left-46 z-30 bg-white p-2 rounded-full shadow hover:bg-gray-100"
               >
                 {showSearch ? (
                   <X className="h-5 w-5" />
