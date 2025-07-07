@@ -39,6 +39,7 @@ export const authOptions: NextAuthOptions = {
 
     async jwt({ token }) {
       try {
+        console.log('[JWT CALLBACK]', token);
         await connectDB();
         const dbUser = await DBUser.findOne({ email: token.email });
         if (dbUser) {
