@@ -16,10 +16,11 @@ import {
   Autocomplete,
   GoogleMap,
   Marker,
+  Circle,
 } from '@react-google-maps/api';
-import { Search, X } from 'lucide-react';
+import { Search, X, LocateFixed } from 'lucide-react';
 
-const defaultLatLng = { lat: 14.5995, lng: 120.9842 }; // Manila
+const defaultLatLng = { lat: 14.5995, lng: 120.9842 }; // Manila center
 
 type FormValues = {
   birthDate: Date | null;
@@ -32,9 +33,13 @@ export default function CompleteProfilePage() {
   const dispatch = useAppDispatch();
   const [error, setError] = useState('');
   const [markerPosition, setMarkerPosition] = useState(defaultLatLng);
+  const [userLocation, setUserLocation] =
+    useState<google.maps.LatLngLiteral | null>(null);
   const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [showMap, setShowMap] = useState(false);
+  const [pulseRadius, setPulseRadius] = useState(20);
+  const [pulseOpacity, setPulseOpacity] = useState(0.2);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
@@ -149,26 +154,50 @@ export default function CompleteProfilePage() {
     });
   };
 
-  // Get user location on map open
   useEffect(() => {
     if (showMap && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          const lat = pos.coords.latitude;
-          const lng = pos.coords.longitude;
-          const current = { lat, lng };
+          const current = {
+            lat: pos.coords.latitude,
+            lng: pos.coords.longitude,
+          };
+          setUserLocation(current);
           setMarkerPosition(current);
           mapRef?.panTo(current);
-          reverseGeocode(lat, lng);
+          reverseGeocode(current.lat, current.lng);
         },
         () => {
-          // fallback to Manila
+          setUserLocation(defaultLatLng);
           setMarkerPosition(defaultLatLng);
           mapRef?.panTo(defaultLatLng);
           reverseGeocode(defaultLatLng.lat, defaultLatLng.lng);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 0,
         }
       );
     }
+  }, [showMap]);
+
+  useEffect(() => {
+    if (!showMap) return;
+    let growing = true;
+    const interval = setInterval(() => {
+      setPulseRadius((prev) => {
+        if (growing && prev >= 40) growing = false;
+        else if (!growing && prev <= 20) growing = true;
+        return growing ? prev + 1 : prev - 1;
+      });
+
+      setPulseOpacity((prev) =>
+        growing ? Math.min(prev + 0.01, 0.4) : Math.max(prev - 0.01, 0.1)
+      );
+    }, 50);
+
+    return () => clearInterval(interval);
   }, [showMap]);
 
   return (
@@ -271,7 +300,7 @@ export default function CompleteProfilePage() {
             </div>
           </div>
 
-          {/* Choose on Map Button */}
+          {/* Choose on Map */}
           {isLoaded && (
             <div className="flex justify-center">
               <button
@@ -284,7 +313,7 @@ export default function CompleteProfilePage() {
             </div>
           )}
 
-          {/* Google Map Section */}
+          {/* Map */}
           {isLoaded && showMap && (
             <div className="relative h-96 w-full mb-6 rounded-lg overflow-hidden border border-gray-300 z-20">
               <label className="block text-sm font-medium text-amber-800 mb-2 px-1 pt-1">
@@ -294,9 +323,23 @@ export default function CompleteProfilePage() {
               <button
                 type="button"
                 onClick={() => setShowMap(false)}
-                className="absolute top-3 right-3 z-30 bg-white p-2 rounded-full shadow hover:bg-gray-100"
+                className="absolute top-0 right-3 z-30  bg-amber-500 p-2 rounded-full shadow hover:bg-amber-600"
               >
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5 " />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (userLocation) {
+                    mapRef?.panTo(userLocation);
+                    setMarkerPosition(userLocation);
+                    reverseGeocode(userLocation.lat, userLocation.lng);
+                  }
+                }}
+                className="absolute bottom-3 left-2 z-30 bg-white p-2 rounded-full shadow hover:bg-gray-100"
+              >
+                <LocateFixed className="h-5 w-5 text-amber-600" />
               </button>
 
               {showSearch && (
@@ -309,7 +352,7 @@ export default function CompleteProfilePage() {
                   <input
                     type="text"
                     placeholder="Search for your address..."
-                    className="absolute top-14 right-4 z-20 w-[calc(100%-2rem)] max-w-md rounded-md border border-gray-300 bg-white px-4 py-2 shadow-md focus:border-amber-500 focus:ring-amber-200"
+                    className="absolute top-22 left-46 z-20 w-[calc(80%-5rem)] max-w-md rounded-md border border-gray-300 bg-white px-4 py-2 shadow-md focus:border-amber-500 focus:ring-amber-200"
                   />
                 </Autocomplete>
               )}
@@ -317,7 +360,7 @@ export default function CompleteProfilePage() {
               <button
                 type="button"
                 onClick={() => setShowSearch(!showSearch)}
-                className="absolute top-3 left-3 z-30 bg-white p-2 rounded-full shadow hover:bg-gray-100"
+                className="absolute top-11 left-46 z-30 bg-white p-2 rounded-full shadow hover:bg-gray-100"
               >
                 {showSearch ? (
                   <X className="h-5 w-5" />
@@ -340,6 +383,37 @@ export default function CompleteProfilePage() {
                   }
                 }}
               >
+                {/* Pulsating user location */}
+                {userLocation && (
+                  <>
+                    <Circle
+                      center={userLocation}
+                      radius={6}
+                      options={{
+                        strokeColor: '#4285F4',
+                        strokeOpacity: 1,
+                        strokeWeight: 2,
+                        fillColor: '#4285F4',
+                        fillOpacity: 1,
+                        zIndex: 101,
+                      }}
+                    />
+                    <Circle
+                      center={userLocation}
+                      radius={pulseRadius}
+                      options={{
+                        strokeColor: '#4285F4',
+                        strokeOpacity: pulseOpacity,
+                        strokeWeight: 1,
+                        fillColor: '#4285F4',
+                        fillOpacity: pulseOpacity,
+                        zIndex: 100,
+                      }}
+                    />
+                  </>
+                )}
+
+                {/* Pin marker */}
                 <Marker
                   position={markerPosition}
                   draggable
