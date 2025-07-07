@@ -3,7 +3,7 @@
 import { useAppDispatch } from '@/store/hooks';
 import { updateProfile } from '@/features/auth/authSlice';
 import { useRouter } from 'next/navigation';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { updateUserProfile } from '@/utils/api/user';
 import type { Address } from '@/types/user';
 import { motion } from 'framer-motion';
@@ -19,7 +19,7 @@ import {
 } from '@react-google-maps/api';
 import { Search, X } from 'lucide-react';
 
-const defaultLatLng = { lat: 14.5995, lng: 120.9842 }; // Manila center
+const defaultLatLng = { lat: 14.5995, lng: 120.9842 }; // Manila
 
 type FormValues = {
   birthDate: Date | null;
@@ -33,7 +33,8 @@ export default function CompleteProfilePage() {
   const [error, setError] = useState('');
   const [markerPosition, setMarkerPosition] = useState(defaultLatLng);
   const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
-  const [showSearch, setShowSearch] = useState(false); // Toggle for search input
+  const [showSearch, setShowSearch] = useState(false);
+  const [showMap, setShowMap] = useState(false);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
@@ -91,7 +92,7 @@ export default function CompleteProfilePage() {
 
       setTimeout(() => {
         router.replace('/');
-      }, 1000); // delay 1000ms to allow redux and hydration to settle
+      }, 3000);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'An unknown error occurred'
@@ -148,6 +149,28 @@ export default function CompleteProfilePage() {
     });
   };
 
+  // Get user location on map open
+  useEffect(() => {
+    if (showMap && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const current = { lat, lng };
+          setMarkerPosition(current);
+          mapRef?.panTo(current);
+          reverseGeocode(lat, lng);
+        },
+        () => {
+          // fallback to Manila
+          setMarkerPosition(defaultLatLng);
+          mapRef?.panTo(defaultLatLng);
+          reverseGeocode(defaultLatLng.lat, defaultLatLng.lng);
+        }
+      );
+    }
+  }, [showMap]);
+
   return (
     <motion.main
       initial={{ opacity: 0, scale: 0.97 }}
@@ -168,10 +191,10 @@ export default function CompleteProfilePage() {
 
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="space-y-6 z-10 relative"
+          className="space-y-6 relative z-10"
         >
           {/* Birthdate */}
-          <div className="z-10 relative">
+          <div>
             <label className="block text-sm font-medium text-amber-800">
               Birthdate
             </label>
@@ -213,73 +236,6 @@ export default function CompleteProfilePage() {
             )}
           </div>
 
-          {/* Map + Search */}
-          {isLoaded && (
-            <div className="relative h-96 w-full mb-6 rounded-lg overflow-hidden border border-gray-300">
-              <label className="block text-sm font-medium text-amber-800 mb-2 px-1 pt-1">
-                Search or Pin your Location
-              </label>
-
-              {/* Toggle Search Button */}
-              <button
-                type="button"
-                onClick={() => setShowSearch(!showSearch)}
-                className="absolute top-3 right-3 z-30 bg-white p-2 rounded-full shadow hover:bg-gray-100"
-              >
-                {showSearch ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Search className="h-5 w-5" />
-                )}
-              </button>
-
-              {/* Autocomplete input */}
-              {showSearch && (
-                <Autocomplete
-                  onLoad={(auto) => {
-                    autocompleteRef.current = auto;
-                    auto.addListener('place_changed', onPlaceChanged);
-                  }}
-                >
-                  <input
-                    type="text"
-                    placeholder="Search for your address..."
-                    className="absolute top-14 right-4 z-20 w-[calc(100%-2rem)] max-w-md rounded-md border border-gray-300 bg-white px-4 py-2 shadow-md focus:border-amber-500 focus:ring-amber-200"
-                  />
-                </Autocomplete>
-              )}
-
-              {/* Google Map */}
-              <GoogleMap
-                center={markerPosition}
-                zoom={15}
-                mapContainerStyle={{ width: '100%', height: '100%' }}
-                onLoad={(map) => setMapRef(map)}
-                onClick={(e) => {
-                  const lat = e.latLng?.lat();
-                  const lng = e.latLng?.lng();
-                  if (lat && lng) {
-                    setMarkerPosition({ lat, lng });
-                    reverseGeocode(lat, lng);
-                  }
-                }}
-              >
-                <Marker
-                  position={markerPosition}
-                  draggable
-                  onDragEnd={(e) => {
-                    const lat = e.latLng?.lat();
-                    const lng = e.latLng?.lng();
-                    if (lat && lng) {
-                      setMarkerPosition({ lat, lng });
-                      reverseGeocode(lat, lng);
-                    }
-                  }}
-                />
-              </GoogleMap>
-            </div>
-          )}
-
           {/* Address Fields */}
           <div>
             <legend className="mb-2 text-lg font-semibold text-amber-900">
@@ -314,6 +270,91 @@ export default function CompleteProfilePage() {
               ))}
             </div>
           </div>
+
+          {/* Choose on Map Button */}
+          {isLoaded && (
+            <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => setShowMap(true)}
+                className="mb-6 rounded-lg bg-amber-500 px-6 py-2 text-white hover:bg-amber-600"
+              >
+                Choose on Map
+              </button>
+            </div>
+          )}
+
+          {/* Google Map Section */}
+          {isLoaded && showMap && (
+            <div className="relative h-96 w-full mb-6 rounded-lg overflow-hidden border border-gray-300 z-20">
+              <label className="block text-sm font-medium text-amber-800 mb-2 px-1 pt-1">
+                Search or Pin your Location
+              </label>
+
+              <button
+                type="button"
+                onClick={() => setShowMap(false)}
+                className="absolute top-3 right-3 z-30 bg-white p-2 rounded-full shadow hover:bg-gray-100"
+              >
+                <X className="h-5 w-5" />
+              </button>
+
+              {showSearch && (
+                <Autocomplete
+                  onLoad={(auto) => {
+                    autocompleteRef.current = auto;
+                    auto.addListener('place_changed', onPlaceChanged);
+                  }}
+                >
+                  <input
+                    type="text"
+                    placeholder="Search for your address..."
+                    className="absolute top-14 right-4 z-20 w-[calc(100%-2rem)] max-w-md rounded-md border border-gray-300 bg-white px-4 py-2 shadow-md focus:border-amber-500 focus:ring-amber-200"
+                  />
+                </Autocomplete>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowSearch(!showSearch)}
+                className="absolute top-3 left-3 z-30 bg-white p-2 rounded-full shadow hover:bg-gray-100"
+              >
+                {showSearch ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Search className="h-5 w-5" />
+                )}
+              </button>
+
+              <GoogleMap
+                center={markerPosition}
+                zoom={15}
+                mapContainerStyle={{ width: '100%', height: '100%' }}
+                onLoad={(map) => setMapRef(map)}
+                onClick={(e) => {
+                  const lat = e.latLng?.lat();
+                  const lng = e.latLng?.lng();
+                  if (lat && lng) {
+                    setMarkerPosition({ lat, lng });
+                    reverseGeocode(lat, lng);
+                  }
+                }}
+              >
+                <Marker
+                  position={markerPosition}
+                  draggable
+                  onDragEnd={(e) => {
+                    const lat = e.latLng?.lat();
+                    const lng = e.latLng?.lng();
+                    if (lat && lng) {
+                      setMarkerPosition({ lat, lng });
+                      reverseGeocode(lat, lng);
+                    }
+                  }}
+                />
+              </GoogleMap>
+            </div>
+          )}
 
           {/* Submit */}
           <button
