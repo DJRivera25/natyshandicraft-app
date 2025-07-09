@@ -1,5 +1,5 @@
 import GoogleProvider from 'next-auth/providers/google';
-import FacebookProvider from 'next-auth/providers/facebook'; // ✅ Import Facebook
+import FacebookProvider from 'next-auth/providers/facebook';
 import type { NextAuthOptions } from 'next-auth';
 import { connectDB } from '@/lib/db';
 import { User as DBUser } from '@/models/User';
@@ -23,6 +23,7 @@ export const authOptions: NextAuthOptions = {
       try {
         await connectDB();
         const existingUser = await DBUser.findOne({ email: user.email });
+
         if (!existingUser) {
           await DBUser.create({
             email: user.email,
@@ -30,6 +31,7 @@ export const authOptions: NextAuthOptions = {
             isAdmin: false,
           });
         }
+
         return true;
       } catch (error) {
         console.error('SignIn error:', error);
@@ -37,19 +39,24 @@ export const authOptions: NextAuthOptions = {
       }
     },
 
-    async jwt({ token }) {
+    async jwt({ token, trigger }) {
       try {
-        console.log('[JWT CALLBACK]', token);
         await connectDB();
-        const dbUser = await DBUser.findOne({ email: token.email });
-        if (dbUser) {
-          token.id = dbUser._id.toString();
-          token.isAdmin = dbUser.isAdmin;
-          token.fullName = dbUser.fullName;
-          token.birthDate = dbUser.birthDate;
-          token.mobileNumber = dbUser.mobileNumber;
-          token.address = dbUser.address;
+
+        // Force refresh DB user on session update or first time
+        if (trigger === 'update' || token?.email) {
+          const dbUser = await DBUser.findOne({ email: token.email });
+
+          if (dbUser) {
+            token.id = dbUser._id.toString();
+            token.isAdmin = dbUser.isAdmin;
+            token.fullName = dbUser.fullName;
+            token.birthDate = dbUser.birthDate;
+            token.mobileNumber = dbUser.mobileNumber;
+            token.address = dbUser.address;
+          }
         }
+
         return token;
       } catch (error) {
         console.error('JWT error:', error);

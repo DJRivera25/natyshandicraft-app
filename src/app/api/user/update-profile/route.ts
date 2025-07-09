@@ -15,6 +15,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { birthDate, mobileNumber, address } = body;
 
+    // Validate required fields
     const requiredFields = [
       address?.street,
       address?.brgy,
@@ -31,6 +32,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // Parse and validate birthDate
     const parsedBirthDate = new Date(birthDate);
     if (isNaN(parsedBirthDate.getTime())) {
       return NextResponse.json(
@@ -39,10 +41,46 @@ export async function POST(req: Request) {
       );
     }
 
+    // ✅ Age validation (must be at least 18 years old)
+    const today = new Date();
+    const age = today.getFullYear() - parsedBirthDate.getFullYear();
+    const monthDiff = today.getMonth() - parsedBirthDate.getMonth();
+    const dayDiff = today.getDate() - parsedBirthDate.getDate();
+    const hasHadBirthdayThisYear =
+      monthDiff > 0 || (monthDiff === 0 && dayDiff >= 0);
+    const realAge = hasHadBirthdayThisYear ? age : age - 1;
+
+    if (realAge < 18) {
+      return NextResponse.json(
+        { message: 'You must be at least 18 years old to continue' },
+        { status: 400 }
+      );
+    }
+
     await connectDB();
 
-    const updatedUser = await User.findOneAndUpdate(
-      { email: session.user.email },
+    // Fetch current user
+    const currentUser = await User.findOne({ email: session.user.email });
+    if (!currentUser) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+    }
+
+    // ✅ Check if mobile number is already in use by another user
+    const existingMobile = await User.findOne({
+      mobileNumber,
+      _id: { $ne: currentUser._id }, // exclude current user
+    });
+
+    if (existingMobile) {
+      return NextResponse.json(
+        { message: 'Mobile number is already in use by another account' },
+        { status: 409 }
+      );
+    }
+
+    // ✅ Update user profile
+    await User.findByIdAndUpdate(
+      currentUser._id,
       {
         $set: {
           birthDate: parsedBirthDate,
@@ -52,10 +90,6 @@ export async function POST(req: Request) {
       },
       { new: true }
     );
-
-    if (!updatedUser) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
-    }
 
     return NextResponse.json(
       { message: 'Profile updated successfully' },

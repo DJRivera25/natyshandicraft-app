@@ -3,7 +3,7 @@
 import { useAppDispatch } from '@/store/hooks';
 import { updateProfile } from '@/features/auth/authSlice';
 import { useRouter } from 'next/navigation';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { updateUserProfile } from '@/utils/api/user';
 import type { Address } from '@/types/user';
 import { motion } from 'framer-motion';
@@ -11,14 +11,10 @@ import { useForm, FieldErrors } from 'react-hook-form';
 import { format } from 'date-fns';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import {
-  useJsApiLoader,
-  Autocomplete,
-  GoogleMap,
-  Marker,
-  Circle,
-} from '@react-google-maps/api';
-import { Search, X, LocateFixed } from 'lucide-react';
+import { useJsApiLoader } from '@react-google-maps/api';
+import GoogleMapSelector from '@/components/GoogleMapSelector';
+import { useSession } from 'next-auth/react';
+import { AxiosError } from 'axios';
 
 const defaultLatLng = { lat: 14.5995, lng: 120.9842 }; // Manila center
 
@@ -29,6 +25,7 @@ type FormValues = {
 };
 
 export default function CompleteProfilePage() {
+  const { update } = useSession();
   const router = useRouter();
   const dispatch = useAppDispatch();
   const [error, setError] = useState('');
@@ -38,15 +35,11 @@ export default function CompleteProfilePage() {
   const [mapRef, setMapRef] = useState<google.maps.Map | null>(null);
   const [showSearch, setShowSearch] = useState(false);
   const [showMap, setShowMap] = useState(false);
-  const [pulseRadius, setPulseRadius] = useState(20);
-  const [pulseOpacity, setPulseOpacity] = useState(0.2);
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     libraries: ['places'],
   });
-
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   const {
     register,
@@ -81,6 +74,7 @@ export default function CompleteProfilePage() {
 
     try {
       const formattedDate = format(data.birthDate, 'yyyy-MM-dd');
+
       await updateUserProfile({
         birthDate: formattedDate,
         mobileNumber: data.mobileNumber,
@@ -95,33 +89,23 @@ export default function CompleteProfilePage() {
         })
       );
 
-      setTimeout(() => {
-        router.replace('/');
-      }, 3000);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'An unknown error occurred'
-      );
+      await update(); // Refresh session
+      router.replace('/');
+    } catch (err: unknown) {
+      const axiosError = err as AxiosError<{ message: string }>;
+
+      const message =
+        axiosError?.response?.data?.message ||
+        (err instanceof Error ? err.message : 'An unknown error occurred');
+
+      if (message.includes('Mobile number is already in use')) {
+        setError('Mobile number is already associated with another account.');
+      } else if (message.includes('at least 18 years old')) {
+        setError('You must be at least 18 years old to continue.');
+      } else {
+        setError(message);
+      }
     }
-  };
-
-  const onPlaceChanged = () => {
-    if (!autocompleteRef.current) return;
-    const place = autocompleteRef.current.getPlace();
-    if (
-      !place.geometry ||
-      !place.geometry.location ||
-      !place.address_components
-    )
-      return;
-
-    const location = place.geometry.location;
-    const lat = location.lat();
-    const lng = location.lng();
-
-    setMarkerPosition({ lat, lng });
-    mapRef?.panTo({ lat, lng });
-    reverseGeocode(lat, lng);
   };
 
   const reverseGeocode = (lat: number, lng: number) => {
@@ -182,24 +166,6 @@ export default function CompleteProfilePage() {
     }
   }, [showMap]);
 
-  useEffect(() => {
-    if (!showMap) return;
-    let growing = true;
-    const interval = setInterval(() => {
-      setPulseRadius((prev) => {
-        if (growing && prev >= 40) growing = false;
-        else if (!growing && prev <= 20) growing = true;
-        return growing ? prev + 1 : prev - 1;
-      });
-
-      setPulseOpacity((prev) =>
-        growing ? Math.min(prev + 0.01, 0.4) : Math.max(prev - 0.01, 0.1)
-      );
-    }, 50);
-
-    return () => clearInterval(interval);
-  }, [showMap]);
-
   return (
     <motion.main
       initial={{ opacity: 0, scale: 0.97 }}
@@ -235,7 +201,7 @@ export default function CompleteProfilePage() {
               showYearDropdown
               dropdownMode="select"
               dateFormat="yyyy-MM-dd"
-              placeholderText="Select your birthdate"
+              placeholderText="YYYY-MM-DD"
               className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-amber-500 focus:ring-amber-200"
             />
             {!birthDate && (
@@ -315,119 +281,17 @@ export default function CompleteProfilePage() {
 
           {/* Map */}
           {isLoaded && showMap && (
-            <div className="relative h-96 w-full mb-6 rounded-lg overflow-hidden border border-gray-300 z-20">
-              <label className="block text-sm font-medium text-amber-800 mb-2 px-1 pt-1">
-                Search or Pin your Location
-              </label>
-
-              <button
-                type="button"
-                onClick={() => setShowMap(false)}
-                className="absolute top-0 right-3 z-30  bg-amber-500 p-2 rounded-full shadow hover:bg-amber-600"
-              >
-                <X className="h-5 w-5 " />
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (userLocation) {
-                    mapRef?.panTo(userLocation);
-                    setMarkerPosition(userLocation);
-                    reverseGeocode(userLocation.lat, userLocation.lng);
-                  }
-                }}
-                className="absolute bottom-3 left-2 z-30 bg-white p-2 rounded-full shadow hover:bg-gray-100"
-              >
-                <LocateFixed className="h-5 w-5 text-amber-600" />
-              </button>
-
-              {showSearch && (
-                <Autocomplete
-                  onLoad={(auto) => {
-                    autocompleteRef.current = auto;
-                    auto.addListener('place_changed', onPlaceChanged);
-                  }}
-                >
-                  <input
-                    type="text"
-                    placeholder="Search for your address..."
-                    className="absolute top-22  left-2 sm:left-46 z-20 w-[calc(100%-2rem)] sm:w-[calc(80%-5rem)] max-w-md rounded-md border border-gray-300 bg-white px-4 py-2 shadow-md focus:border-amber-500 focus:ring-amber-200"
-                  />
-                </Autocomplete>
-              )}
-
-              <button
-                type="button"
-                onClick={() => setShowSearch(!showSearch)}
-                className="absolute top-11 left-50 sm:left-46 z-30 bg-white p-2 rounded-full shadow hover:bg-gray-100"
-              >
-                {showSearch ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Search className="h-5 w-5" />
-                )}
-              </button>
-
-              <GoogleMap
-                center={markerPosition}
-                zoom={15}
-                mapContainerStyle={{ width: '100%', height: '100%' }}
-                onLoad={(map) => setMapRef(map)}
-                onClick={(e) => {
-                  const lat = e.latLng?.lat();
-                  const lng = e.latLng?.lng();
-                  if (lat && lng) {
-                    setMarkerPosition({ lat, lng });
-                    reverseGeocode(lat, lng);
-                  }
-                }}
-              >
-                {/* Pulsating user location */}
-                {userLocation && (
-                  <>
-                    <Circle
-                      center={userLocation}
-                      radius={6}
-                      options={{
-                        strokeColor: '#4285F4',
-                        strokeOpacity: 1,
-                        strokeWeight: 2,
-                        fillColor: '#4285F4',
-                        fillOpacity: 1,
-                        zIndex: 101,
-                      }}
-                    />
-                    <Circle
-                      center={userLocation}
-                      radius={pulseRadius}
-                      options={{
-                        strokeColor: '#4285F4',
-                        strokeOpacity: pulseOpacity,
-                        strokeWeight: 1,
-                        fillColor: '#4285F4',
-                        fillOpacity: pulseOpacity,
-                        zIndex: 100,
-                      }}
-                    />
-                  </>
-                )}
-
-                {/* Pin marker */}
-                <Marker
-                  position={markerPosition}
-                  draggable
-                  onDragEnd={(e) => {
-                    const lat = e.latLng?.lat();
-                    const lng = e.latLng?.lng();
-                    if (lat && lng) {
-                      setMarkerPosition({ lat, lng });
-                      reverseGeocode(lat, lng);
-                    }
-                  }}
-                />
-              </GoogleMap>
-            </div>
+            <GoogleMapSelector
+              showSearch={showSearch}
+              setShowSearch={setShowSearch}
+              userLocation={userLocation}
+              markerPosition={markerPosition}
+              setMarkerPosition={setMarkerPosition}
+              mapRef={mapRef}
+              setMapRef={setMapRef}
+              reverseGeocode={reverseGeocode}
+              onClose={() => setShowMap(false)}
+            />
           )}
 
           {/* Submit */}
