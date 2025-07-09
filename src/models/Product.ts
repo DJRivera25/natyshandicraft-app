@@ -9,24 +9,36 @@ interface IReview {
 
 export interface IProduct extends Document {
   name: string;
-  description: string;
+  description?: string;
   price: number;
-  discountedPrice?: number;
   discountPercent?: number;
   discountActive?: boolean;
 
   category?: string;
-  imageUrl?: string; // main image
-  perspectives?: string[]; // other angles/images
+  imageUrl?: string;
+  perspectives?: string[];
 
-  initialQuantity: number;
-  inStock: boolean;
+  stock: number;
+  soldQuantity: number;
+  restockThreshold: number;
+  lastRestockedAt?: Date;
+  sku?: string;
+
   isActive: boolean;
 
-  reviews: IReview[];
-  averageRating?: number;
-  numReviews?: number;
+  views: number;
+  wishlistCount: number;
+  tags?: string[];
 
+  isFeatured: boolean;
+  promoText?: string;
+  availableFrom?: Date;
+  availableUntil?: Date;
+
+  visibility: 'public' | 'private';
+  deletedAt?: Date;
+
+  reviews: IReview[];
   createdBy?: Types.ObjectId;
 }
 
@@ -47,20 +59,36 @@ const ProductSchema = new Schema<IProduct>(
     price: { type: Number, required: true },
     discountPercent: { type: Number, default: 0 },
     discountActive: { type: Boolean, default: false },
-    discountedPrice: { type: Number }, // you may calculate and store during save
 
     category: { type: String },
     imageUrl: { type: String },
     perspectives: [{ type: String }],
 
-    initialQuantity: { type: Number, required: true },
-    inStock: { type: Boolean, default: true },
+    stock: { type: Number, default: 0 },
+    soldQuantity: { type: Number, default: 0 },
+    restockThreshold: { type: Number, default: 5 },
+    lastRestockedAt: { type: Date },
+    sku: { type: String, unique: true },
+
     isActive: { type: Boolean, default: true },
 
-    reviews: [ReviewSchema],
-    averageRating: { type: Number, default: 0 },
-    numReviews: { type: Number, default: 0 },
+    views: { type: Number, default: 0 },
+    wishlistCount: { type: Number, default: 0 },
+    tags: [{ type: String }],
 
+    isFeatured: { type: Boolean, default: false },
+    promoText: { type: String },
+    availableFrom: { type: Date },
+    availableUntil: { type: Date },
+
+    visibility: {
+      type: String,
+      enum: ['public', 'private'],
+      default: 'public',
+    },
+    deletedAt: { type: Date },
+
+    reviews: [ReviewSchema],
     createdBy: { type: Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }

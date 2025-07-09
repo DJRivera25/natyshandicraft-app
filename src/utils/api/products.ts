@@ -17,32 +17,37 @@ export const apiFetchProducts = async (
   const res = await axiosInstance.get('/products', {
     params: { page, limit },
   });
-
+  // All product fields are now available in res.data.products
   return res.data;
 };
 
 export const apiFetchProductById = async (id: string): Promise<Product> => {
   const res = await axiosInstance.get(`/products/${id}`);
-  return res.data; // assuming your API returns just the product object
+  // All product fields are now available in res.data
+  return res.data;
 };
 
 export const apiDeleteProduct = async (
   id: string
 ): Promise<{ message: string }> => {
   const res = await axiosInstance.delete(`/products/${id}`);
-  return res.data; // expecting: { message: 'Deleted successfully' }
+  return res.data;
 };
 
-export const apiToggleProductStock = async (
+// Toggle product active status (was previously stock)
+export const apiToggleProductActive = async (
   id: string
 ): Promise<{ message: string }> => {
-  const res = await axiosInstance.patch(`/products/${id}/toggle-stock`);
-  return res.data; // expecting: { message: 'Stock updated' }
+  const res = await axiosInstance.patch(
+    `/products/${id}/toggle?field=isActive`
+  );
+  return res.data;
 };
 
 export const apiCreateProduct = async (
   productData: CreateProductInput
 ): Promise<Product> => {
+  // All fields in CreateProductInput are now supported
   const res = await axiosInstance.post('/products', productData);
   return res.data;
 };
@@ -51,6 +56,7 @@ export const apiUpdateProduct = async (
   id: string,
   productData: UpdateProductInput
 ): Promise<Product> => {
+  // All fields in UpdateProductInput are now supported
   const res = await axiosInstance.put(`/products/${id}`, productData);
   return res.data;
 };
@@ -63,6 +69,7 @@ export interface SearchProductsParams {
   page?: number;
   limit?: number;
   sortBy?: string;
+  // Add more search params as needed for new fields
 }
 
 export async function apiSearchProducts({
@@ -88,8 +95,9 @@ export async function apiSearchProducts({
       page,
       limit,
       sortBy,
+      // Add more params for new fields if needed
     },
   });
-
+  // All product fields are now available in res.data.products
   return res.data;
 }

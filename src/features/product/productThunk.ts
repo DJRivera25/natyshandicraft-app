@@ -6,7 +6,7 @@ import {
   apiCreateProduct,
   apiDeleteProduct,
   apiUpdateProduct,
-  apiToggleProductStock,
+  apiToggleProductActive,
   apiSearchProducts,
 } from '@/utils/api/products';
 import {
@@ -17,7 +17,7 @@ import {
   addProduct,
   removeProduct,
   updateProduct,
-  toggleProductStock,
+  toggleProductActive,
   setQuery,
 } from './productSlice';
 import type { CreateProductInput, UpdateProductInput } from '@/types/product';
@@ -81,13 +81,14 @@ export const updateProductThunk =
     }
   };
 
-export const toggleStockThunk =
+// Toggle product active status (was previously stock)
+export const toggleActiveThunk =
   (id: string) => async (dispatch: AppDispatch) => {
     try {
-      await apiToggleProductStock(id);
-      dispatch(toggleProductStock(id));
+      await apiToggleProductActive(id);
+      dispatch(toggleProductActive(id));
     } catch {
-      dispatch(setError('Failed to toggle stock status.'));
+      dispatch(setError('Failed to toggle active status.'));
     }
   };
 
