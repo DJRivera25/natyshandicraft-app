@@ -156,50 +156,60 @@ export default function Navbar() {
           </Link>
 
           {isAuthenticated ? (
-            isProfileComplete && (
-              <div className="relative" ref={profileRef}>
-                <button
-                  onClick={() => setProfileOpen(!profileOpen)}
-                  className="flex items-center gap-2 text-sm text-neutral-700 hover:text-amber-800"
-                >
-                  <User className="h-6 w-6" />
-                  <span className="hidden md:inline">
-                    {user?.fullName?.split(' ')[0]}
-                  </span>
-                </button>
+            <div className="relative" ref={profileRef}>
+              <button
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="flex items-center gap-2 text-sm text-neutral-700 hover:text-amber-800"
+              >
+                <User className="h-6 w-6" />
+                <span className="hidden md:inline">
+                  {user?.fullName?.split(' ')[0] || 'User'}
+                </span>
+              </button>
 
-                <AnimatePresence>
-                  {profileOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: -8, scale: 0.95 }}
-                      transition={{ duration: 0.2 }}
-                      className="absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-white ring-1 ring-neutral-200 z-50"
+              <AnimatePresence>
+                {profileOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-white ring-1 ring-neutral-200 z-50"
+                  >
+                    {!isProfileComplete ? (
+                      <Link
+                        href="/complete-profile"
+                        className="block px-4 py-2 text-sm text-amber-700 font-semibold hover:bg-amber-100"
+                      >
+                        Complete Profile
+                      </Link>
+                    ) : (
+                      <>
+                        <Link
+                          href="/profile"
+                          className="block px-4 py-2 text-sm text-neutral-700 hover:bg-amber-100"
+                        >
+                          My Profile
+                        </Link>
+                        <Link
+                          href="/profile/orders"
+                          className="block px-4 py-2 text-sm text-neutral-700 hover:bg-amber-100"
+                        >
+                          My Orders
+                        </Link>
+                      </>
+                    )}
+
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
                     >
-                      <Link
-                        href="/profile"
-                        className="block px-4 py-2 text-sm text-neutral-700 hover:bg-amber-100"
-                      >
-                        My Profile
-                      </Link>
-                      <Link
-                        href="/profile/orders"
-                        className="block px-4 py-2 text-sm text-neutral-700 hover:bg-amber-100"
-                      >
-                        My Orders
-                      </Link>
-                      <button
-                        onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50"
-                      >
-                        Logout
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            )
+                      Logout
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           ) : (
             <Link
               href="/login"

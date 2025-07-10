@@ -9,7 +9,7 @@ interface ProductState {
   totalPages: number;
   loading: boolean;
   error: string | null;
-  query: string; // 🔍 added for shared search term
+  query: string; // 🔍 shared search term
 }
 
 const initialState: ProductState = {
@@ -20,7 +20,7 @@ const initialState: ProductState = {
   totalPages: 1,
   loading: false,
   error: null,
-  query: '', // 🔍 initialized
+  query: '',
 };
 
 const productSlice = createSlice({
@@ -61,10 +61,11 @@ const productSlice = createSlice({
     removeProduct(state, action: PayloadAction<string>) {
       state.products = state.products.filter((p) => p._id !== action.payload);
     },
-    toggleProductStock(state, action: PayloadAction<string>) {
+    // Toggle product active status (was previously inStock)
+    toggleProductActive(state, action: PayloadAction<string>) {
       const product = state.products.find((p) => p._id === action.payload);
       if (product) {
-        product.inStock = !product.inStock;
+        product.isActive = !product.isActive;
       }
     },
     updateProduct(state, action: PayloadAction<Product>) {
@@ -87,8 +88,8 @@ export const {
   addProduct,
   removeProduct,
   updateProduct,
-  toggleProductStock,
-  setQuery, // ✅ export this
+  toggleProductActive,
+  setQuery,
 } = productSlice.actions;
 
 export default productSlice.reducer;

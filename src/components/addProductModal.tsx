@@ -1,37 +1,154 @@
 'use client';
 
-import { useState } from 'react';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import {
-  createProductThunk,
-  fetchProductsThunk,
-} from '@/features/product/productThunk';
+import { useState, useRef } from 'react';
+import { Upload, X, Plus, Trash2, Star, Tag } from 'lucide-react';
 import { uploadImage } from '@/utils/api/uploadImage';
+import { apiCreateProduct } from '@/utils/api/products';
 import type { CreateProductInput } from '@/types/product';
-import Image from 'next/image';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export default function AddProductModal({ isOpen, onClose }: Props) {
-  const dispatch = useAppDispatch();
-  const { categories } = useAppSelector((state) => state.category);
+// Form field configurations for mapping
+const basicFields = [
+  {
+    name: 'name',
+    type: 'text',
+    label: 'Product Name',
+    placeholder: 'Enter product name',
+    required: true,
+  },
+  {
+    name: 'description',
+    type: 'textarea',
+    label: 'Description',
+    placeholder: 'Describe your product...',
+    rows: 2,
+  },
+  {
+    name: 'category',
+    type: 'text',
+    label: 'Category',
+    placeholder: 'e.g., Jewelry, Home Decor, Kitchen',
+  },
+  {
+    name: 'sku',
+    type: 'text',
+    label: 'SKU (Stock Keeping Unit)',
+    placeholder: 'e.g., HW-BOWL-001',
+  },
+];
 
-  const [formData, setFormData] = useState<
-    Omit<CreateProductInput, 'imageUrl'>
-  >({
+const pricingFields = [
+  {
+    name: 'price',
+    type: 'number',
+    label: 'Price',
+    placeholder: '0.00',
+    required: true,
+    prefix: '₱',
+  },
+  {
+    name: 'discountPercent',
+    type: 'number',
+    label: 'Discount Percentage',
+    placeholder: '0',
+    min: 0,
+    max: 100,
+  },
+];
+
+const inventoryFields = [
+  {
+    name: 'stock',
+    type: 'number',
+    label: 'Stock Quantity',
+    placeholder: '0',
+    required: true,
+  },
+  {
+    name: 'restockThreshold',
+    type: 'number',
+    label: 'Restock Threshold',
+    placeholder: '5',
+  },
+];
+
+const dateFields = [
+  {
+    name: 'availableFrom',
+    type: 'date',
+    label: 'Available From',
+    placeholder: 'Select start date',
+  },
+  {
+    name: 'availableUntil',
+    type: 'date',
+    label: 'Available Until',
+    placeholder: 'Select end date',
+  },
+];
+
+const checkboxFields = [
+  { name: 'discountActive', label: 'Activate discount' },
+  { name: 'isFeatured', label: 'Featured product', icon: Star },
+  { name: 'isActive', label: 'Product is active' },
+];
+
+interface FieldConfig {
+  name: string;
+  type: string;
+  label: string;
+  placeholder: string;
+  required?: boolean;
+  prefix?: string;
+  min?: number;
+  max?: number;
+  rows?: number;
+}
+
+interface CheckboxFieldConfig {
+  name: string;
+  label: string;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
+export default function AddProductModal({ isOpen, onClose }: Props) {
+  const [formData, setFormData] = useState<CreateProductInput>({
     name: '',
     price: 0,
     description: '',
     category: '',
-    initialQuantity: 0,
-    inStock: true,
+    imageUrl: '',
+    perspectives: [],
+    stock: 0,
+    soldQuantity: 0,
+    restockThreshold: 5,
+    isActive: true,
+    isFeatured: false,
+    visibility: 'public',
+    sku: '',
+    discountPercent: 0,
+    discountActive: false,
+    promoText: '',
+    tags: [],
+    availableFrom: undefined,
+    availableUntil: undefined,
+    views: 0,
+    wishlistCount: 0,
   });
-
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [tagInput, setTagInput] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [isPerspectiveDragOver, setIsPerspectiveDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const perspectiveFileInputRef = useRef<HTMLInputElement>(null);
+
+  if (!isOpen) return null;
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -39,183 +156,555 @@ export default function AddProductModal({ isOpen, onClose }: Props) {
     >
   ) => {
     const { name, value, type, checked, files } = e.target as HTMLInputElement;
-
     if (type === 'file') {
-      const file = files?.[0] ?? null;
+      const file = files?.[0] || null;
       setImageFile(file);
       if (file) {
-        const previewUrl = URL.createObjectURL(file);
-        setImagePreview(previewUrl);
+        const reader = new FileReader();
+        reader.onloadend = () => setPreviewUrl(reader.result as string);
+        reader.readAsDataURL(file);
       } else {
-        setImagePreview(null);
+        setPreviewUrl(null);
       }
+    } else if (type === 'checkbox') {
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+    } else if (name === 'availableFrom' || name === 'availableUntil') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value ? new Date(value) : undefined,
+      }));
     } else {
       setFormData((prev) => ({
         ...prev,
-        [name]:
-          type === 'checkbox'
-            ? checked
-            : name === 'price' || name === 'initialQuantity'
-              ? parseFloat(value)
-              : value,
+        [name]: [
+          'price',
+          'stock',
+          'restockThreshold',
+          'discountPercent',
+        ].includes(name)
+          ? parseFloat(value)
+          : value,
       }));
+    }
+  };
+
+  const handleTagAdd = () => {
+    if (tagInput.trim() && !formData.tags?.includes(tagInput.trim())) {
+      setFormData((prev) => ({
+        ...prev,
+        tags: [...(prev.tags || []), tagInput.trim()],
+      }));
+      setTagInput('');
+    }
+  };
+
+  const handleTagRemove = (tag: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: (prev.tags || []).filter((t) => t !== tag),
+    }));
+  };
+
+  const handlePerspectiveRemove = (perspective: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      perspectives: (prev.perspectives || []).filter((p) => p !== perspective),
+    }));
+  };
+
+  const handleImageUpload = (file: File) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const imageUrl = reader.result as string;
+      if (!formData.perspectives?.includes(imageUrl)) {
+        setFormData((prev) => ({
+          ...prev,
+          perspectives: [...(prev.perspectives || []), imageUrl],
+        }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDragDrop = (
+    e: React.DragEvent,
+    setIsDragOverFn: (value: boolean) => void,
+    handleUploadFn: (file: File) => void
+  ) => {
+    e.preventDefault();
+    if (e.type === 'dragover') setIsDragOverFn(true);
+    if (e.type === 'dragleave') setIsDragOverFn(false);
+    if (e.type === 'drop') {
+      setIsDragOverFn(false);
+      const files = Array.from(e.dataTransfer.files);
+      const imageFile = files.find((file) => file.type.startsWith('image/'));
+      if (imageFile) handleUploadFn(imageFile);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      let imageUrl = '';
+      let imageUrl = formData.imageUrl;
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
       }
-
-      await dispatch(createProductThunk({ ...formData, imageUrl }));
-      await dispatch(fetchProductsThunk());
+      await apiCreateProduct({ ...formData, imageUrl });
+      setFormData({
+        name: '',
+        price: 0,
+        description: '',
+        category: '',
+        imageUrl: '',
+        perspectives: [],
+        stock: 0,
+        soldQuantity: 0,
+        restockThreshold: 5,
+        isActive: true,
+        isFeatured: false,
+        visibility: 'public',
+        sku: '',
+        discountPercent: 0,
+        discountActive: false,
+        promoText: '',
+        tags: [],
+        availableFrom: undefined,
+        availableUntil: undefined,
+        views: 0,
+        wishlistCount: 0,
+      });
+      setImageFile(null);
+      setPreviewUrl(null);
+      setTagInput('');
       onClose();
-    } catch (err) {
-      console.error('❌ Failed to add product:', err);
-      alert((err as Error).message);
+    } catch (error) {
+      console.error('Failed to create product:', error);
+      alert('Failed to add product. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!isOpen) return null;
+  // Render input field based on configuration
+  const renderField = (field: FieldConfig) => {
+    const fieldValue = formData[field.name as keyof CreateProductInput];
+    const stringValue =
+      fieldValue instanceof Date
+        ? fieldValue.toISOString().split('T')[0]
+        : String(fieldValue || '');
+
+    const commonProps = {
+      name: field.name,
+      value: stringValue,
+      onChange: handleChange,
+      className:
+        'w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-xs',
+      placeholder: field.placeholder,
+      required: field.required,
+      min: field.min,
+      max: field.max,
+    };
+
+    if (field.type === 'textarea') {
+      return (
+        <div className="space-y-0.5">
+          <label className="block text-xs font-medium text-gray-700">
+            {field.label}{' '}
+            {field.required && <span className="text-red-500">*</span>}
+          </label>
+          <textarea
+            {...commonProps}
+            rows={field.rows}
+            className={commonProps.className + ' resize-none'}
+          />
+        </div>
+      );
+    }
+
+    if (field.prefix) {
+      return (
+        <div className="space-y-0.5">
+          <label className="block text-xs font-medium text-gray-700">
+            {field.label}{' '}
+            {field.required && <span className="text-red-500">*</span>}
+          </label>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs">
+              {field.prefix}
+            </span>
+            <input
+              {...commonProps}
+              type={field.type}
+              className={commonProps.className + ' pl-5 pr-2'}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-0.5">
+        <label className="block text-xs font-medium text-gray-700">
+          {field.label}{' '}
+          {field.required && <span className="text-red-500">*</span>}
+        </label>
+        <input {...commonProps} type={field.type} />
+      </div>
+    );
+  };
+
+  // Render checkbox field
+  const renderCheckbox = (field: CheckboxFieldConfig) => (
+    <label
+      key={field.name}
+      className="flex items-center gap-1 cursor-pointer group"
+    >
+      <input
+        type="checkbox"
+        name={field.name}
+        checked={!!formData[field.name as keyof CreateProductInput]}
+        onChange={handleChange}
+        className="w-3 h-3 text-green-600 border-gray-300 rounded focus:ring-green-500"
+      />
+      {field.icon && <field.icon className="w-3 h-3 text-green-500" />}
+      <span className="text-xs text-gray-700 group-hover:text-gray-900">
+        {field.label}
+      </span>
+    </label>
+  );
+
+  const ImageUploadZone = ({
+    title,
+    isDragOver,
+    setIsDragOver,
+    onUpload,
+    preview,
+    onRemove,
+    fileRef,
+    multiple = false,
+    showPreview = true,
+  }: {
+    title: string;
+    isDragOver: boolean;
+    setIsDragOver: (value: boolean) => void;
+    onUpload: (file: File) => void;
+    preview?: string | null;
+    onRemove?: () => void;
+    fileRef: React.RefObject<HTMLInputElement | null>;
+    multiple?: boolean;
+    showPreview?: boolean;
+  }) => (
+    <div className="space-y-1">
+      <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1">
+        <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+        {title}
+      </h3>
+      <div
+        className={`border-2 border-dashed rounded-lg p-2 text-center transition-all ${
+          isDragOver
+            ? 'border-green-500 bg-green-50'
+            : 'border-gray-300 hover:border-green-400'
+        }`}
+        onDragOver={(e) => handleDragDrop(e, setIsDragOver, onUpload)}
+        onDragLeave={(e) => handleDragDrop(e, setIsDragOver, onUpload)}
+        onDrop={(e) => handleDragDrop(e, setIsDragOver, onUpload)}
+      >
+        {preview && showPreview ? (
+          <div className="space-y-1">
+            <img
+              src={preview}
+              alt="Preview"
+              className="w-full h-16 object-cover rounded-lg mx-auto"
+            />
+            <button
+              type="button"
+              onClick={onRemove}
+              className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors flex items-center gap-1 mx-auto"
+            >
+              <Trash2 className="w-2.5 h-2.5" /> Remove
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-1">
+            <Upload className="w-4 h-4 text-gray-400 mx-auto" />
+            <p className="text-xs text-gray-600">
+              Drag & drop or click to browse
+            </p>
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="px-2 py-0.5 bg-green-600 text-white rounded text-xs hover:bg-green-700 transition-colors"
+            >
+              Choose File
+            </button>
+          </div>
+        )}
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          multiple={multiple}
+          onChange={handleChange}
+          className="hidden"
+        />
+      </div>
+    </div>
+  );
 
   return (
-    <div className="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black">
-      <div className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
-        <h2 className="mb-4 text-xl font-semibold text-amber-800">
-          Add New Product
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Name */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">
-              Product Name *
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full rounded border px-3 py-2 focus:outline-amber-500"
-              required
-            />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2">
+      <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-3 py-2 border-b border-green-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-green-900 flex items-center gap-1">
+                <Plus className="w-4 h-4" />
+                Add New Product
+              </h2>
+              <p className="text-green-700 text-xs">
+                Create a new product listing
+              </p>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1 hover:bg-green-100 rounded-full transition-colors"
+            >
+              <X className="w-3 h-3 text-green-700" />
+            </button>
           </div>
+        </div>
 
-          {/* Price */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Price *</label>
-            <input
-              type="number"
-              name="price"
-              value={formData.price || ''}
-              onChange={handleChange}
-              className="w-full rounded border px-3 py-2 focus:outline-amber-500"
-              required
-            />
-          </div>
-
-          {/* Initial Quantity */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">
-              Initial Quantity *
-            </label>
-            <input
-              type="number"
-              name="initialQuantity"
-              value={formData.initialQuantity || ''}
-              onChange={handleChange}
-              className="w-full rounded border px-3 py-2 focus:outline-amber-500"
-              required
-            />
-          </div>
-
-          {/* Category dropdown + free input */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">Category *</label>
-            <input
-              list="category-options"
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              placeholder="Choose or enter category"
-              className="w-full rounded border px-3 py-2 focus:outline-amber-500"
-              required
-            />
-            <datalist id="category-options">
-              {categories.map((cat) => (
-                <option key={cat} value={cat} />
-              ))}
-            </datalist>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">
-              Description *
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              rows={3}
-              className="w-full rounded border px-3 py-2 focus:outline-amber-500"
-              required
-            />
-          </div>
-
-          {/* Image Upload */}
-          <div>
-            <label className="block mb-1 text-sm font-medium">
-              Product Image *
-            </label>
-            <input
-              type="file"
-              name="image"
-              accept="image/*"
-              onChange={handleChange}
-              className="w-full text-sm"
-              required
-            />
-            {imagePreview && (
-              <div className="relative mt-2 h-40 w-full rounded overflow-hidden">
-                <Image
-                  src={imagePreview}
-                  alt="Preview"
-                  fill
-                  className="object-cover"
-                  unoptimized
-                />
+        <form onSubmit={handleSubmit} className="p-3">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Left Column */}
+            <div className="space-y-3">
+              {/* Basic Info */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1">
+                  <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                  Basic Information
+                </h3>
+                <div className="space-y-1.5">
+                  {basicFields.map((field, index) => (
+                    <div
+                      key={field.name}
+                      className={
+                        index === 1
+                          ? ''
+                          : index === 2 || index === 3
+                            ? 'grid grid-cols-2 gap-1.5'
+                            : ''
+                      }
+                    >
+                      {index === 2 || index === 3
+                        ? renderField(field)
+                        : renderField(field)}
+                    </div>
+                  ))}
+                </div>
               </div>
-            )}
+
+              {/* Pricing */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1">
+                  <div className="w-1 h-1 bg-green-500 rounded-full"></div>
+                  Pricing & Discounts
+                </h3>
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {pricingFields.map((field) => (
+                      <div key={field.name}>{renderField(field)}</div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {checkboxFields
+                      .slice(0, 2)
+                      .map((field) => renderCheckbox(field))}
+                  </div>
+                  <div className="space-y-0.5">
+                    <label className="block text-xs font-medium text-gray-700">
+                      Promotional Text
+                    </label>
+                    <input
+                      type="text"
+                      name="promoText"
+                      value={formData.promoText}
+                      onChange={handleChange}
+                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-xs"
+                      placeholder="e.g., Limited time offer! Free shipping"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Tags */}
+              <div className="space-y-1.5">
+                <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1">
+                  <Tag className="w-3 h-3 text-blue-500" />
+                  Tags
+                </h3>
+                <div className="space-y-1.5">
+                  <div className="flex gap-1">
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyPress={(e) =>
+                        e.key === 'Enter' &&
+                        (e.preventDefault(), handleTagAdd())
+                      }
+                      className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-xs"
+                      placeholder="Add tag and press Enter"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleTagAdd}
+                      className="px-2 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1 text-xs"
+                    >
+                      <Plus className="w-2.5 h-2.5" /> Add
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {formData.tags?.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 text-green-800 rounded-full text-xs"
+                      >
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => handleTagRemove(tag)}
+                          className="hover:text-red-600 transition-colors"
+                        >
+                          <X className="w-2 h-2" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-3">
+              {/* Main Image */}
+              <ImageUploadZone
+                title="Main Product Image"
+                isDragOver={isDragOver}
+                setIsDragOver={setIsDragOver}
+                onUpload={(file: File) => {
+                  setImageFile(file);
+                  const reader = new FileReader();
+                  reader.onloadend = () =>
+                    setPreviewUrl(reader.result as string);
+                  reader.readAsDataURL(file);
+                }}
+                preview={previewUrl}
+                onRemove={() => {
+                  setImageFile(null);
+                  setPreviewUrl(null);
+                }}
+                fileRef={fileInputRef}
+              />
+
+              {/* Perspective Images */}
+              <ImageUploadZone
+                title="Additional Images"
+                isDragOver={isPerspectiveDragOver}
+                setIsDragOver={setIsPerspectiveDragOver}
+                onUpload={handleImageUpload}
+                fileRef={perspectiveFileInputRef}
+                multiple={true}
+                showPreview={false}
+              />
+
+              {formData.perspectives && formData.perspectives.length > 0 && (
+                <div className="grid grid-cols-4 gap-1.5">
+                  {formData.perspectives.map((p, index) => (
+                    <div key={index} className="relative group">
+                      <img
+                        src={p}
+                        alt={`Perspective ${index + 1}`}
+                        className="w-full h-12 object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handlePerspectiveRemove(p)}
+                        className="absolute -top-0.5 -right-0.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <X className="w-2 h-2" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Inventory & Settings */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1">
+                  <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
+                  Inventory & Settings
+                </h3>
+                <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {inventoryFields.map((field) => (
+                      <div key={field.name}>{renderField(field)}</div>
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {renderCheckbox(checkboxFields[2])}
+                    <div className="space-y-0.5">
+                      <label className="block text-xs font-medium text-gray-700">
+                        Visibility
+                      </label>
+                      <select
+                        name="visibility"
+                        value={formData.visibility}
+                        onChange={handleChange}
+                        className="px-1.5 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all text-xs"
+                      >
+                        <option value="public">Public</option>
+                        <option value="private">Private</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    {dateFields.map((field) => (
+                      <div key={field.name}>{renderField(field)}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* In Stock Checkbox */}
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              name="inStock"
-              checked={formData.inStock}
-              onChange={handleChange}
-            />
-            <span className="text-sm">In Stock</span>
-          </label>
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-2">
+          {/* Footer Actions */}
+          <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="rounded bg-gray-300 px-4 py-2 text-sm hover:bg-gray-400"
+              className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700"
+              disabled={loading}
+              className="px-4 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
             >
-              Add Product
+              {loading ? (
+                <>
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-3 h-3" />
+                  Create Product
+                </>
+              )}
             </button>
           </div>
         </form>

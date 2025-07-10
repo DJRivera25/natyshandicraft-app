@@ -17,6 +17,7 @@ export async function middleware(request: NextRequest) {
 
   // ✅ Get the session token (works for both encrypted or JWT strategy)
   const token = await getToken({ req: request, secret });
+  console.log(`token`, token);
 
   // 🛑 Not logged in and trying to access protected pages
   if (!token && (isProtectedRoute || isCompleteProfilePage)) {
