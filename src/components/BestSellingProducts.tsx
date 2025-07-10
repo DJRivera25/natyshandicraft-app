@@ -1,6 +1,5 @@
 'use client';
 
-<<<<<<< HEAD
 import { useEffect, useState } from 'react';
 import ProductCard from './ProductCard';
 import { apiFetchProducts } from '@/utils/api/products';
@@ -22,13 +21,6 @@ export default function BestSellingProducts() {
       .finally(() => setLoading(false));
   }, []);
 
-=======
-import { useAppSelector } from '@/store/hooks';
-import ProductCard from './ProductCard';
-
-export default function BestSellingProducts() {
-  const { products, loading, error } = useAppSelector((state) => state.product);
->>>>>>> 64c3867d7002e5664ecce9b26a45c296d6788e60
   const bestSelling = products
     .slice()
     .sort((a, b) => (b.soldQuantity || 0) - (a.soldQuantity || 0))
