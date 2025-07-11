@@ -1,4 +1,4 @@
-import { Schema, model, models, Document } from 'mongoose';
+import { Schema, model, models, Document, Types } from 'mongoose';
 
 export interface IUser extends Document {
   email: string;
@@ -6,6 +6,7 @@ export interface IUser extends Document {
   fullName: string;
   birthDate?: Date;
   isAdmin: boolean;
+  wishlist?: Types.ObjectId[];
   address?: {
     street: string;
     brgy: string;
@@ -23,6 +24,7 @@ const UserSchema = new Schema<IUser>(
     fullName: { type: String, required: true },
     birthDate: { type: Date },
     isAdmin: { type: Boolean, default: false },
+    wishlist: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
     address: {
       street: { type: String },
       brgy: { type: String },
@@ -37,4 +39,3 @@ const UserSchema = new Schema<IUser>(
 
 // Prevent model overwrite error in dev
 export const User = models.User || model<IUser>('User', UserSchema);
-  

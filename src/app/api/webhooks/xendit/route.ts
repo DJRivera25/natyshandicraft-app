@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { Payment } from '@/models/Payment';
-import { Order } from '@/models/Order';
+import { Order, IOrderItem } from '@/models/Order';
+import { Product } from '@/models/Product';
 
 interface XenditWebhookPayload {
   id: string;
@@ -75,12 +76,48 @@ export async function POST(req: NextRequest) {
       orderUpdateData.paymentMethod = paymentChannel;
     }
 
-    await Order.findByIdAndUpdate(payment.order, orderUpdateData);
+    const updatedOrder = await Order.findByIdAndUpdate(
+      payment.order,
+      orderUpdateData,
+      { new: true }
+    );
 
     console.log(
       `[Webhook] Updated order ${payment.order} with:`,
       orderUpdateData
     );
+
+    // 🆕 Update product sold quantities when payment is successful
+    if (status === 'paid' && updatedOrder) {
+      try {
+        // Update sold quantities for all products in the order
+        const updatePromises = updatedOrder.items.map(
+          async (item: IOrderItem) => {
+            await Product.findByIdAndUpdate(
+              item.product,
+              {
+                $inc: {
+                  soldQuantity: item.quantity,
+                  stock: -item.quantity, // Also decrease stock
+                },
+              },
+              { new: true, runValidators: true }
+            );
+          }
+        );
+
+        await Promise.all(updatePromises);
+        console.log(
+          `[Webhook] Updated sold quantities for ${updatedOrder.items.length} products in order ${updatedOrder._id}`
+        );
+      } catch (error) {
+        console.error(
+          '[Webhook] Failed to update product sold quantities:',
+          error
+        );
+        // Don't fail the webhook if product updates fail
+      }
+    }
 
     return NextResponse.json({ message: 'Webhook processed successfully' });
   } catch (error) {

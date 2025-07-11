@@ -6,7 +6,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { Types } from 'mongoose';
 
-export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   await connectDB();
   const productId = params.id;
@@ -38,7 +41,10 @@ export async function GET(req: NextRequest, props: { params: Promise<{ id: strin
   });
 }
 
-export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function POST(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   await connectDB();
   const session = await getServerSession(authOptions);
@@ -69,7 +75,7 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   // Check if user purchased this product
   const hasPurchased = await Order.exists({
     user: userId,
-    'items.productId': productId,
+    'items.product': productId,
     status: { $in: ['paid', 'completed'] },
   });
   if (!hasPurchased) {

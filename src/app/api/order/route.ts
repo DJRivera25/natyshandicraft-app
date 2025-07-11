@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { Order } from '@/models/Order';
 import { Cart } from '@/models/Cart';
+import { Product } from '@/models/Product';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { Types } from 'mongoose';
@@ -57,6 +58,36 @@ export async function POST(req: NextRequest) {
       status: status || 'pending',
       address,
     });
+
+    // 🆕 Update product sold quantities for COD orders immediately
+    if (paymentMethod === 'cod') {
+      try {
+        // Update sold quantities for all products in the order
+        const updatePromises = orderItems.map(async (item) => {
+          await Product.findByIdAndUpdate(
+            item.product,
+            {
+              $inc: {
+                soldQuantity: item.quantity,
+                stock: -item.quantity, // Also decrease stock
+              },
+            },
+            { new: true, runValidators: true }
+          );
+        });
+
+        await Promise.all(updatePromises);
+        console.log(
+          `[Order Creation] Updated sold quantities for ${orderItems.length} products in COD order ${order._id}`
+        );
+      } catch (error) {
+        console.error(
+          '[Order Creation] Failed to update product sold quantities:',
+          error
+        );
+        // Don't fail the order creation if product updates fail
+      }
+    }
 
     const cart = await Cart.findOne({ user: session.user.id });
     if (cart) {

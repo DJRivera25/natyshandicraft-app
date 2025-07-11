@@ -104,3 +104,78 @@ export async function apiSearchProducts(params: SearchProductsParams): Promise<{
   // All product fields are now available in res.data.products
   return res.data;
 }
+
+export const apiCheckPurchaseVerification = async (
+  productId: string
+): Promise<{ hasPurchased: boolean }> => {
+  try {
+    const response = await fetch(
+      `/api/products/${productId}/purchase-verification`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to check purchase verification');
+    }
+
+    const data = await response.json();
+    return { hasPurchased: data.hasPurchased || false };
+  } catch (error) {
+    console.error('Error checking purchase verification:', error);
+    return { hasPurchased: false };
+  }
+};
+
+// Increment product views
+export const apiIncrementProductViews = async (
+  productId: string
+): Promise<{ message: string; views: number }> => {
+  const res = await axiosInstance.post(`/products/${productId}/views`);
+  return res.data;
+};
+
+// Toggle product wishlist status
+export const apiToggleWishlist = async (
+  productId: string,
+  action: 'add' | 'remove'
+): Promise<{
+  message: string;
+  isWishlisted: boolean;
+  wishlistCount: number;
+}> => {
+  const res = await axiosInstance.post(`/products/${productId}/wishlist`, {
+    action,
+  });
+  return res.data;
+};
+
+// Check if product is in user's wishlist
+export const apiCheckWishlistStatus = async (
+  productId: string
+): Promise<{ isWishlisted: boolean }> => {
+  const res = await axiosInstance.get(`/products/${productId}/wishlist`);
+  return res.data;
+};
+
+// Update product sold quantity
+export const apiUpdateSoldQuantity = async (
+  productId: string,
+  quantity: number
+): Promise<{
+  message: string;
+  soldQuantity: number;
+  stock: number;
+}> => {
+  const res = await axiosInstance.patch(
+    `/products/${productId}/sold-quantity`,
+    {
+      quantity,
+    }
+  );
+  return res.data;
+};
