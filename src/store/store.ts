@@ -16,6 +16,7 @@ import authReducer from '@/features/auth/authSlice';
 import productReducer from '@/features/product/productSlice';
 import orderReducer from '@/features/order/orderSlice';
 import categoryReducer from '@/features/category/categorySlice'; // ✅ added
+import reviewReducer from '@/features/review/reviewSlice';
 
 const rootReducer = combineReducers({
   cart: cartReducer,
@@ -23,6 +24,7 @@ const rootReducer = combineReducers({
   product: productReducer,
   order: orderReducer,
   category: categoryReducer, // ✅ added
+  review: reviewReducer, // <-- add review slice
 });
 
 const persistConfig = {

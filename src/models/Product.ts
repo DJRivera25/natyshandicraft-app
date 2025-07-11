@@ -1,6 +1,6 @@
 import { Schema, model, models, Document, Types } from 'mongoose';
 
-interface IReview {
+export interface IReview {
   user: Types.ObjectId;
   rating: number;
   comment: string;

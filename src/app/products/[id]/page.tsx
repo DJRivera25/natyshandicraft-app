@@ -1,17 +1,22 @@
 'use client';
 
-import Image from 'next/image';
 import { useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchProductByIdThunk } from '@/features/product/productThunk';
-import AddToCartClient from '@/components/AddToCartClient';
-import PageWrapper from '@/components/PageWrapper';
+import ProductDetails from '@/components/ProductDetails';
 import Breadcrumb from '@/components/BreadCrumb';
+import { motion } from 'framer-motion';
+import { AlertCircle, Package } from 'lucide-react';
+import NewsletterOverlay from '@/components/NewsletterOverlay';
+import Footer from '@/components/Footer';
 
 export default function ProductDetailPage() {
   const params = useParams() as { id: string };
   const dispatch = useAppDispatch();
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.isAdmin;
 
   const { selectedProduct, loading, error } = useAppSelector(
     (state) => state.product
@@ -23,79 +28,87 @@ export default function ProductDetailPage() {
     }
   }, [dispatch, params?.id]);
 
-  if (loading) return null;
-
-  if (error)
+  if (loading) {
     return (
-      <PageWrapper>
-        <p
-          className="p-6 text-center text-red-700 font-semibold"
-          role="alert"
-          aria-live="assertive"
-        >
-          Failed to load product: {error}
-        </p>
-      </PageWrapper>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{
+              duration: 1,
+              repeat: Infinity,
+              ease: 'linear',
+            }}
+            className="w-12 h-12 border-4 border-amber-200 border-t-amber-600 rounded-full mx-auto mb-4"
+          />
+          <p className="text-gray-600">Loading product details...</p>
+        </div>
+      </div>
     );
+  }
 
-  if (!selectedProduct)
+  if (error) {
     return (
-      <PageWrapper>
-        <p className="p-6 text-center text-gray-600 italic" aria-live="polite">
-          Product not found.
-        </p>
-      </PageWrapper>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            Something went wrong
+          </h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
     );
+  }
 
-  const { _id, name, price, imageUrl, category, description } = selectedProduct;
+  if (!selectedProduct) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            Product not found
+          </h3>
+          <p className="text-gray-600 mb-4">
+            The product you&apos;re looking for doesn&apos;t exist or has been
+            removed.
+          </p>
+          <button
+            onClick={() => window.history.back()}
+            className="px-6 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition-colors"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <PageWrapper>
-      <Breadcrumb currentTitle={name} />
-      <article className="mx-auto max-w-5xl px-2 sm:px-4 py-6 md:py-12 rounded-3xl bg-amber-100 shadow-lg">
-        <div className="flex flex-col md:flex-row rounded-3xl overflow-hidden">
-          {/* Image Section */}
-          <div className="flex items-center justify-center p-4  md:w-1/2">
-            <Image
-              src={imageUrl || '/placeholder.jpg'}
-              alt={`Image of ${name}`}
-              width={400}
-              height={400}
-              className="rounded-xl object-contain max-h-[400px] w-auto h-auto"
-              placeholder="blur"
-              blurDataURL="/placeholder-blur.png"
-              priority
-            />
-          </div>
-
-          {/* Info Section */}
-          <section className="flex flex-col justify-between p-8 md:w-1/2">
-            <div>
-              <h1 className="text-3xl font-serif font-bold text-amber-900 mb-4">
-                {name}
-              </h1>
-              <p className="text-2xl font-semibold text-amber-700 mb-4">
-                ₱{price.toFixed(2)}
-              </p>
-              <span className="inline-block mb-6 px-3 py-1 text-sm font-medium bg-amber-200 text-amber-900 rounded-full uppercase tracking-wider">
-                {category}
-              </span>
-              <p className="text-amber-800 leading-relaxed whitespace-pre-line mb-10">
-                {description}
-              </p>
-            </div>
-
-            <AddToCartClient
-              product={{
-                _id,
-                name,
-                price,
-                imageUrl: imageUrl ?? '/placeholder.jpg',
-              }}
-            />
-          </section>
+    <>
+      <Breadcrumb currentTitle={selectedProduct.name} />
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <div className="pb-32">
+          <ProductDetails product={selectedProduct} isAdmin={isAdmin} />
         </div>
-      </article>
-    </PageWrapper>
+      </motion.div>
+      {/* Newsletter Overlay */}
+      <div className="relative">
+        <NewsletterOverlay />
+      </div>
+      <div className="mt-[-48px]">
+        <Footer />
+      </div>
+    </>
   );
 }

@@ -22,14 +22,9 @@ export default function HomePage() {
       </div>
       {/* Overlay container for NewArrivals and NewsletterOverlay */}
       <div className="relative">
-        {' '}
-        {/* pb-32 to make space for overlay */}
         <NewsletterOverlay />
       </div>
-      {/* Footer with margin to avoid overlap */}
       <div className="mt-[-48px]">
-        {' '}
-        {/* negative margin to pull footer up under overlay */}
         <Footer />
       </div>
     </>
