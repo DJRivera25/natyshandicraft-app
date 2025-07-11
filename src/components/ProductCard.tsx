@@ -66,7 +66,7 @@ export default function ProductCard({ product }: Props) {
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/admin/product/${product._id}`);
+    router.push(`/admin/products/${product._id}`);
   };
 
   const handleDelete = async (e: React.MouseEvent) => {

@@ -21,6 +21,22 @@ export const apiFetchProducts = async (
   return res.data;
 };
 
+// New function for admin to fetch ALL products (including inactive)
+export const apiFetchAllProducts = async (
+  page: number = 1,
+  limit: number = 10
+): Promise<{
+  products: Product[];
+  total: number;
+  page: number;
+  totalPages: number;
+}> => {
+  const res = await axiosInstance.get('/products/all', {
+    params: { page, limit },
+  });
+  return res.data;
+};
+
 export const apiFetchProductById = async (id: string): Promise<Product> => {
   const res = await axiosInstance.get(`/products/${id}`);
   // All product fields are now available in res.data

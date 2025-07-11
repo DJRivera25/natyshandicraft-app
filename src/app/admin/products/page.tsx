@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import AddProductModal from '@/components/addProductModal';
-import { apiFetchProducts, apiDeleteProduct } from '@/utils/api/products';
+import { apiFetchAllProducts, apiDeleteProduct } from '@/utils/api/products';
 import type { Product } from '@/types/product';
 
 export default function AdminProductsPage() {
@@ -16,7 +16,7 @@ export default function AdminProductsPage() {
 
   useEffect(() => {
     setLoading(true);
-    apiFetchProducts(1, 100)
+    apiFetchAllProducts(1, 100) // Changed to use apiFetchAllProducts
       .then(({ products }) => {
         setProducts(products);
         setError(null);
@@ -65,7 +65,9 @@ export default function AdminProductsPage() {
                 <ProductCard product={product} />
                 <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition">
                   <button
-                    onClick={() => router.push(`/admin/product/${product._id}`)}
+                    onClick={() =>
+                      router.push(`/admin/products/${product._id}`)
+                    }
                     className="bg-yellow-500 hover:bg-yellow-600 text-white rounded-full px-3 py-1 text-xs font-semibold shadow"
                   >
                     Edit
@@ -77,6 +79,12 @@ export default function AdminProductsPage() {
                     Delete
                   </button>
                 </div>
+                {/* Status indicator for inactive products */}
+                {!product.isActive && (
+                  <div className="absolute top-2 left-2 bg-red-500 text-white rounded-full px-2 py-1 text-xs font-semibold shadow">
+                    Inactive
+                  </div>
+                )}
               </div>
             ))}
           </div>
