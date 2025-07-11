@@ -69,18 +69,12 @@ export interface SearchProductsParams {
   page?: number;
   limit?: number;
   sortBy?: string;
-  // Add more search params as needed for new fields
+  isFeatured?: boolean;
+  discountActive?: boolean;
+  inStock?: boolean;
 }
 
-export async function apiSearchProducts({
-  q = '',
-  minPrice = 0,
-  maxPrice = 0,
-  category = '',
-  page = 1,
-  limit = 10,
-  sortBy = 'newest',
-}: SearchProductsParams): Promise<{
+export async function apiSearchProducts(params: SearchProductsParams): Promise<{
   products: Product[];
   total: number;
   page: number;
@@ -88,14 +82,7 @@ export async function apiSearchProducts({
 }> {
   const res = await axiosInstance.get('/products/search', {
     params: {
-      q,
-      minPrice,
-      maxPrice,
-      category,
-      page,
-      limit,
-      sortBy,
-      // Add more params for new fields if needed
+      ...params,
     },
   });
   // All product fields are now available in res.data.products

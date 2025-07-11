@@ -92,6 +92,7 @@ export const toggleActiveThunk =
     }
   };
 
+// params can include isFeatured, discountActive, inStock for special features filtering
 export const searchProductsThunk =
   (params: SearchProductsParams) => async (dispatch: AppDispatch) => {
     dispatch(startLoading());

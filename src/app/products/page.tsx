@@ -48,6 +48,11 @@ export default function ProductsPage() {
   const [sortBy, setSortBy] = useState('newest');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
+  const [specialFeatures, setSpecialFeatures] = useState<{
+    isFeatured?: boolean;
+    discountActive?: boolean;
+    inStock?: boolean;
+  }>({});
 
   // Mobile search internal state
   const [mobileSearchInput, setMobileSearchInput] = useState('');
@@ -66,6 +71,7 @@ export default function ProductsPage() {
         page,
         limit: 12,
         sortBy,
+        ...specialFeatures,
       })
     );
   }, [
@@ -76,6 +82,7 @@ export default function ProductsPage() {
     debouncedMaxPrice,
     category,
     sortBy,
+    specialFeatures,
   ]);
 
   // Stabilize functions to prevent sidebar re-renders
@@ -106,6 +113,18 @@ export default function ProductsPage() {
   const handleSidebarToggle = useCallback((value: boolean) => {
     setIsSidebarOpen(value);
   }, []);
+
+  const handleSpecialFeaturesChange = useCallback(
+    (features: {
+      isFeatured?: boolean;
+      discountActive?: boolean;
+      inStock?: boolean;
+    }) => {
+      setSpecialFeatures(features);
+      setPage(1);
+    },
+    []
+  );
 
   const getSortLabel = (value: string) => {
     switch (value) {
@@ -342,6 +361,7 @@ export default function ProductsPage() {
                 isSidebarOpen={isSidebarOpen}
                 setIsSidebarOpen={handleSidebarToggle}
                 categories={categories}
+                onSpecialFeaturesChange={handleSpecialFeaturesChange}
               />
 
               {/* Products Grid */}
