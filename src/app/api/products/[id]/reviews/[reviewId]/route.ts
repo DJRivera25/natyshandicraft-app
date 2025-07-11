@@ -7,8 +7,9 @@ import { Types } from 'mongoose';
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string; reviewId: string } }
+  props: { params: Promise<{ id: string; reviewId: string }> }
 ) {
+  const params = await props.params;
   await connectDB();
   const session = await getServerSession(authOptions);
   if (!session || !session.user?.id) {
