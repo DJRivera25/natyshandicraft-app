@@ -27,7 +27,7 @@ declare module 'next-auth' {
         province: string;
         postalCode: string;
         country: string;
-      };
+      } | null;
     };
   }
 }
@@ -39,6 +39,6 @@ declare module 'next-auth/jwt' {
     fullName?: string | null;
     mobileNumber?: string | null;
     birthDate?: string | null;
-    address?: Address | null;
+    address?: Address;
   }
 }
