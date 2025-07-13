@@ -1,7 +1,6 @@
 // Main user type used across your frontend
 export interface Address {
   street: string;
-  brgy: string;
   city: string;
   province: string;
   postalCode: string;

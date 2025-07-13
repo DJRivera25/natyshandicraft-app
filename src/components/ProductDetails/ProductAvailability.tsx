@@ -16,22 +16,19 @@ const ProductAvailability: React.FC<ProductAvailabilityProps> = ({
   }
 
   return (
-    <div className="space-y-2">
-      <h3 className="text-lg font-semibold text-gray-900">Availability</h3>
-      <div className="flex items-center gap-4 text-sm text-gray-600">
-        {product.availableFrom && (
-          <span className="flex items-center gap-1">
-            <Calendar className="w-4 h-4" />
-            From: {new Date(product.availableFrom).toLocaleDateString()}
-          </span>
-        )}
-        {product.availableUntil && (
-          <span className="flex items-center gap-1">
-            <Calendar className="w-4 h-4" />
-            Until: {new Date(product.availableUntil).toLocaleDateString()}
-          </span>
-        )}
-      </div>
+    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
+      {product.availableFrom && (
+        <span className="flex items-center gap-1">
+          <Calendar className="w-3 h-3" />
+          From: {new Date(product.availableFrom).toLocaleDateString()}
+        </span>
+      )}
+      {product.availableUntil && (
+        <span className="flex items-center gap-1">
+          <Calendar className="w-3 h-3" />
+          Until: {new Date(product.availableUntil).toLocaleDateString()}
+        </span>
+      )}
     </div>
   );
 };

@@ -4,7 +4,6 @@ import type { JWT as DefaultJWT } from 'next-auth/jwt';
 
 interface Address {
   street: string;
-  brgy: string;
   city: string;
   province: string;
   postalCode: string;
@@ -22,7 +21,13 @@ declare module 'next-auth' {
       fullName?: string | null;
       mobileNumber?: string | null;
       birthDate?: string | null;
-      address?: Address | null;
+      address?: {
+        street: string;
+        city: string;
+        province: string;
+        postalCode: string;
+        country: string;
+      };
     };
   }
 }

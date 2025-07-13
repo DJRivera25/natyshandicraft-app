@@ -27,12 +27,14 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useState } from 'react';
+import EditProductModal from './EditProductModal';
 
 interface Props {
   product: Product;
+  onProductUpdate?: (updatedProduct: Product) => void;
 }
 
-export default function ProductCard({ product }: Props) {
+export default function ProductCard({ product, onProductUpdate }: Props) {
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const router = useRouter();
@@ -45,6 +47,7 @@ export default function ProductCard({ product }: Props) {
   const [isHovered, setIsHovered] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -66,7 +69,8 @@ export default function ProductCard({ product }: Props) {
 
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/admin/products/${product._id}`);
+    setShowActions(false);
+    setIsEditModalOpen(true);
   };
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -96,7 +100,7 @@ export default function ProductCard({ product }: Props) {
   };
 
   const handleViewProduct = () => {
-    if (!isAdmin) router.push(`/products/${product._id}`);
+    router.push(`/products/${product._id}`);
   };
 
   const handleShare = (e: React.MouseEvent) => {
@@ -153,12 +157,12 @@ export default function ProductCard({ product }: Props) {
         damping: 20,
         duration: 0.3,
       }}
-      className={`group relative w-full max-w-[320px] rounded-2xl bg-white border border-gray-200/60 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden ${
-        !isAdmin ? 'cursor-pointer' : ''
-      } ${!product.isActive ? 'opacity-60' : ''}`}
+      className={`group relative w-full max-w-[280px] sm:max-w-[320px] rounded-xl bg-white border border-gray-200/60 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer ${
+        !product.isActive ? 'opacity-60' : ''
+      }`}
     >
       {/* Main Image Container */}
-      <div className="relative w-full h-64 bg-gradient-to-br from-amber-50 to-amber-100 overflow-hidden">
+      <div className="relative w-full h-40 sm:h-48 md:h-56 lg:h-64 bg-gradient-to-br from-amber-50 to-amber-100 overflow-hidden">
         <Image
           src={(product.imageUrl || '/placeholder.jpg') as string}
           alt={
@@ -179,23 +183,29 @@ export default function ProductCard({ product }: Props) {
               exit={{ opacity: 0 }}
               className="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center"
             >
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 sm:gap-2">
                 {!isAdmin && (
                   <motion.button
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleAddToCart}
                     disabled={isInCart || isLoading || product.stock === 0}
-                    className={`p-3 rounded-full shadow-lg transition-all ${
+                    className={`p-2 sm:p-2.5 lg:p-3 rounded-full shadow-lg transition-all ${
                       isInCart
                         ? 'bg-green-500 text-white'
                         : 'bg-white/90 text-gray-700 hover:bg-white'
                     } ${isLoading ? 'animate-pulse' : ''}`}
                   >
                     {isInCart ? (
-                      <Check size={20} />
+                      <Check
+                        size={14}
+                        className="sm:w-4 sm:h-4 lg:w-5 lg:h-5"
+                      />
                     ) : (
-                      <ShoppingCart size={20} />
+                      <ShoppingCart
+                        size={14}
+                        className="sm:w-4 sm:h-4 lg:w-5 lg:h-5"
+                      />
                     )}
                   </motion.button>
                 )}
@@ -204,9 +214,9 @@ export default function ProductCard({ product }: Props) {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={handleShare}
-                  className="p-3 rounded-full bg-white/90 text-gray-700 hover:bg-white shadow-lg transition-all"
+                  className="p-2 sm:p-2.5 lg:p-3 rounded-full bg-white/90 text-gray-700 hover:bg-white shadow-lg transition-all"
                 >
-                  <Share2 size={20} />
+                  <Share2 size={14} className="sm:w-4 sm:h-4 lg:w-5 lg:h-5" />
                 </motion.button>
               </div>
             </motion.div>
@@ -214,15 +224,15 @@ export default function ProductCard({ product }: Props) {
         </AnimatePresence>
 
         {/* Badges */}
-        <div className="absolute top-3 left-3 flex flex-col gap-2">
+        <div className="absolute top-2 left-2 flex flex-col gap-1">
           {/* Featured Badge */}
           {product.isFeatured && (
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border border-yellow-200 flex items-center gap-1"
+              className="bg-gradient-to-r from-yellow-400 to-yellow-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg border border-yellow-200 flex items-center gap-1"
             >
-              <Star size={12} />
+              <Star size={10} className="sm:w-3" />
               Featured
             </motion.div>
           )}
@@ -231,7 +241,7 @@ export default function ProductCard({ product }: Props) {
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className={`text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border flex items-center gap-1 ${
+            className={`text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg border flex items-center gap-1 ${
               stockStatus.color === 'red'
                 ? 'bg-red-500 border-red-200'
                 : stockStatus.color === 'yellow'
@@ -239,7 +249,7 @@ export default function ProductCard({ product }: Props) {
                   : 'bg-green-500 border-green-200'
             }`}
           >
-            <Package size={12} />
+            <Package size={10} className="sm:w-3" />
             {stockStatus.text}
           </motion.div>
         </div>
@@ -251,22 +261,26 @@ export default function ProductCard({ product }: Props) {
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
-              className="absolute top-3 right-3 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg border border-red-200 flex items-center gap-1"
+              className="absolute top-2 right-2 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg border border-red-200 flex items-center gap-1"
             >
-              <TrendingUp size={12} />-{product.discountPercent}%
+              <TrendingUp size={10} className="sm:w-3" />
+              <span>-{product.discountPercent}%</span>
             </motion.div>
           )}
 
         {/* Admin Actions */}
         {isAdmin && (
-          <div className="absolute top-3 right-3">
+          <div
+            className="absolute top-2 right-2"
+            onClick={(e) => e.stopPropagation()}
+          >
             <motion.button
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowActions(!showActions)}
-              className="p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white shadow-lg transition-all"
+              className="p-1.5 sm:p-2 rounded-full bg-white/90 text-gray-700 hover:bg-white shadow-lg transition-all"
             >
-              <MoreVertical size={16} />
+              <MoreVertical size={12} className="sm:w-4" />
             </motion.button>
 
             <AnimatePresence>
@@ -275,31 +289,31 @@ export default function ProductCard({ product }: Props) {
                   initial={{ opacity: 0, scale: 0.8, y: -10 }}
                   animate={{ opacity: 1, scale: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.8, y: -10 }}
-                  className="absolute right-0 top-10 bg-white rounded-lg shadow-xl border border-gray-200 p-2 space-y-1 min-w-[120px]"
+                  className="absolute right-0 top-8 sm:top-10 bg-white rounded-lg shadow-xl border border-gray-200 p-2 space-y-1 min-w-[100px] sm:min-w-[120px]"
                 >
                   <button
                     onClick={handleEdit}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-blue-50 rounded-md transition-colors"
+                    className="w-full flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 hover:bg-blue-50 rounded-md transition-colors"
                   >
-                    <Pencil size={14} />
+                    <Pencil size={12} className="sm:w-3.5" />
                     Edit
                   </button>
                   <button
                     onClick={handleToggleActive}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-yellow-50 rounded-md transition-colors"
+                    className="w-full flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-gray-700 hover:bg-yellow-50 rounded-md transition-colors"
                   >
                     {product.isActive ? (
-                      <EyeOff size={14} />
+                      <EyeOff size={12} className="sm:w-3.5" />
                     ) : (
-                      <Eye size={14} />
+                      <Eye size={12} className="sm:w-3.5" />
                     )}
                     {product.isActive ? 'Hide' : 'Show'}
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                    className="w-full flex items-center gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-red-600 hover:bg-red-50 rounded-md transition-colors"
                   >
-                    <Trash2 size={14} />
+                    <Trash2 size={12} className="sm:w-3.5" />
                     Delete
                   </button>
                 </motion.div>
@@ -310,30 +324,30 @@ export default function ProductCard({ product }: Props) {
       </div>
 
       {/* Content */}
-      <div className="p-5 space-y-3">
+      <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
         {/* Product Name */}
-        <h3 className="text-lg font-bold text-gray-900 line-clamp-2 leading-tight group-hover:text-amber-700 transition-colors">
+        <h3 className="text-xs sm:text-sm font-bold text-gray-900 truncate group-hover:text-amber-700 transition-colors">
           {product.name}
         </h3>
 
         {/* Price Section */}
         <div className="space-y-1">
           <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-amber-600">
-              ₱{calculateDiscountedPrice().toFixed(2)}
+            <span className="text-base sm:text-lg font-bold text-amber-600">
+              {calculateDiscountedPrice().toFixed(2)}
             </span>
             {product.discountActive &&
               product.discountPercent &&
               product.discountPercent > 0 && (
-                <span className="text-lg text-gray-400 line-through">
-                  ₱{product.price.toFixed(2)}
+                <span className="text-xs sm:text-sm text-gray-400 line-through">
+                  {product.price.toFixed(2)}
                 </span>
               )}
           </div>
 
           {/* Promo Text */}
           {product.promoText && (
-            <p className="text-sm text-green-600 font-medium">
+            <p className="text-xs text-green-600 font-medium truncate">
               {product.promoText}
             </p>
           )}
@@ -386,7 +400,7 @@ export default function ProductCard({ product }: Props) {
             whileTap={{ scale: 0.98 }}
             onClick={handleAddToCart}
             disabled={isInCart || isLoading || product.stock === 0}
-            className={`w-full mt-4 py-3 px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+            className={`w-full mt-3 py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-2 text-sm sm:text-base ${
               isInCart
                 ? 'bg-green-100 text-green-700 cursor-not-allowed'
                 : product.stock === 0
@@ -395,20 +409,20 @@ export default function ProductCard({ product }: Props) {
             } ${isLoading ? 'animate-pulse' : ''}`}
           >
             {isLoading ? (
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : isInCart ? (
               <>
-                <Check size={20} />
+                <Check size={16} className="sm:w-5" />
                 Added to Cart
               </>
             ) : product.stock === 0 ? (
               <>
-                <AlertCircle size={20} />
+                <AlertCircle size={16} className="sm:w-5" />
                 Out of Stock
               </>
             ) : (
               <>
-                <ShoppingCart size={20} />
+                <ShoppingCart size={16} className="sm:w-5" />
                 Add to Cart
               </>
             )}
@@ -432,6 +446,22 @@ export default function ProductCard({ product }: Props) {
           </div>
         )}
       </div>
+
+      {/* Edit Product Modal */}
+      {isEditModalOpen && (
+        <div onClick={(e) => e.stopPropagation()}>
+          <EditProductModal
+            product={product}
+            onClose={() => setIsEditModalOpen(false)}
+            onSave={(updatedProduct) => {
+              setIsEditModalOpen(false);
+              if (onProductUpdate) {
+                onProductUpdate(updatedProduct as Product);
+              }
+            }}
+          />
+        </div>
+      )}
     </motion.div>
   );
 }

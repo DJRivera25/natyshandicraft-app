@@ -7,11 +7,16 @@ export interface OrderItem {
 
 export interface Address {
   street: string;
-  brgy: string;
   city: string;
   province: string;
   postalCode: string;
   country: string;
+}
+
+export interface Location {
+  lat: number;
+  lng: number;
+  formattedAddress?: string;
 }
 
 export interface Order {
@@ -23,6 +28,7 @@ export interface Order {
   paymentMethod?: string;
   paidAt?: string;
   address: Address;
+  location?: Location;
   createdAt: string;
   updatedAt: string;
 }

@@ -13,8 +13,6 @@ import ProductSidebar from '@/components/ProductsFilterSidebar';
 import { useHasMounted } from '@/utils/useHasMounted';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Grid3X3,
-  List,
   Plus,
   Search,
   Filter,
@@ -46,7 +44,6 @@ export default function ProductsPage() {
   const [category, setCategory] = useState('All');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [sortBy, setSortBy] = useState('newest');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [specialFeatures, setSpecialFeatures] = useState<{
     isFeatured?: boolean;
@@ -126,6 +123,31 @@ export default function ProductsPage() {
     []
   );
 
+  const handleProductUpdate = useCallback(() => {
+    // Refresh the products list to show updated data
+    dispatch(
+      searchProductsThunk({
+        q: debouncedQ,
+        minPrice: debouncedMinPrice,
+        maxPrice: debouncedMaxPrice,
+        category: category !== 'All' ? category : '',
+        page,
+        limit: 12,
+        sortBy,
+        ...specialFeatures,
+      })
+    );
+  }, [
+    dispatch,
+    debouncedQ,
+    debouncedMinPrice,
+    debouncedMaxPrice,
+    category,
+    page,
+    sortBy,
+    specialFeatures,
+  ]);
+
   const getSortLabel = (value: string) => {
     switch (value) {
       case 'newest':
@@ -168,15 +190,15 @@ export default function ProductsPage() {
               animate={{ opacity: 1, y: 0 }}
               className="sticky top-0 z-30 bg-white/80 backdrop-blur-md border-b border-amber-200/60 shadow-sm"
             >
-              <div className="px-4 py-4 md:px-6">
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+              <div className="px-3 sm:px-4 md:px-6 py-3 sm:py-4">
+                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4">
                   {/* Title and Search */}
-                  <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-4">
+                  <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
                     <div>
-                      <h1 className="text-2xl md:text-3xl font-bold text-amber-900">
+                      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-amber-900">
                         Our Products
                       </h1>
-                      <p className="text-amber-700 text-sm">
+                      <p className="text-amber-700 text-xs sm:text-sm">
                         Discover our handcrafted treasures
                       </p>
                     </div>
@@ -202,48 +224,21 @@ export default function ProductsPage() {
                   </div>
 
                   {/* Controls */}
-                  <div className="flex items-center gap-3">
-                    {/* View Mode Toggle */}
-                    <div className="flex items-center bg-white border border-gray-300 rounded-lg p-1">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setViewMode('grid')}
-                        className={`p-2 rounded-md transition-all ${
-                          viewMode === 'grid'
-                            ? 'bg-amber-500 text-white shadow-md'
-                            : 'text-gray-600 hover:text-amber-600'
-                        }`}
-                      >
-                        <Grid3X3 className="w-4 h-4" />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => setViewMode('list')}
-                        className={`p-2 rounded-md transition-all ${
-                          viewMode === 'list'
-                            ? 'bg-amber-500 text-white shadow-md'
-                            : 'text-gray-600 hover:text-amber-600'
-                        }`}
-                      >
-                        <List className="w-4 h-4" />
-                      </motion.button>
-                    </div>
-
+                  <div className="flex items-center gap-2 sm:gap-3">
                     {/* Sort Dropdown */}
                     <div className="relative">
                       <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={() => setShowFilters(!showFilters)}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-sm font-medium"
+                        className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-all text-xs sm:text-sm font-medium"
                       >
                         {getSortIcon(sortBy)}
                         <span className="hidden sm:inline">
                           {getSortLabel(sortBy)}
                         </span>
-                        <ChevronDown className="w-4 h-4" />
+                        <span className="sm:hidden">Sort</span>
+                        <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                       </motion.button>
 
                       <AnimatePresence>
@@ -252,7 +247,7 @@ export default function ProductsPage() {
                             initial={{ opacity: 0, y: -10, scale: 0.95 }}
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                            className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl py-2 min-w-[200px] z-50"
+                            className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl py-2 min-w-[180px] sm:min-w-[200px] z-50"
                           >
                             {[
                               {
@@ -288,9 +283,9 @@ export default function ProductsPage() {
                                   setShowFilters(false);
                                   setPage(1);
                                 }}
-                                className="w-full flex items-center gap-3 px-4 py-2 text-left hover:bg-amber-50 transition-colors text-sm"
+                                className="w-full flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 text-left hover:bg-amber-50 transition-colors text-xs sm:text-sm"
                               >
-                                <option.icon className="w-4 h-4 text-gray-500" />
+                                <option.icon className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500" />
                                 <span
                                   className={
                                     sortBy === option.value
@@ -313,20 +308,21 @@ export default function ProductsPage() {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={handleAddProduct}
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl"
+                        className="flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl text-xs sm:text-sm"
                       >
-                        <Plus className="w-4 h-4" />
+                        <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                         <span className="hidden sm:inline">Add Product</span>
+                        <span className="sm:hidden">Add</span>
                       </motion.button>
                     )}
                   </div>
                 </div>
 
                 {/* Results Summary */}
-                <div className="flex items-center justify-between mt-4 pt-4 border-t border-amber-200/60">
-                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center justify-between mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-amber-200/60">
+                  <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
                     <span className="flex items-center gap-1">
-                      <Package className="w-4 h-4" />
+                      <Package className="w-3 h-3 sm:w-4 sm:h-4" />
                       {products.length} products
                     </span>
                     {(debouncedQ ||
@@ -334,15 +330,18 @@ export default function ProductsPage() {
                       debouncedMinPrice > 0 ||
                       debouncedMaxPrice < 10000) && (
                       <span className="flex items-center gap-1 text-amber-600">
-                        <Filter className="w-4 h-4" />
-                        Filters applied
+                        <Filter className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="hidden sm:inline">
+                          Filters applied
+                        </span>
+                        <span className="sm:hidden">Filtered</span>
                       </span>
                     )}
                   </div>
 
                   {/* Pagination Info */}
                   {totalPages > 1 && (
-                    <div className="text-sm text-gray-500">
+                    <div className="text-xs sm:text-sm text-gray-500">
                       Page {page} of {totalPages}
                     </div>
                   )}
@@ -365,7 +364,7 @@ export default function ProductsPage() {
               />
 
               {/* Products Grid */}
-              <div className="flex-1 p-4 md:p-6 min-w-0">
+              <div className="flex-1 p-2 sm:p-3 md:p-4 lg:p-6 min-w-0">
                 {loading ? (
                   <div className="flex flex-col items-center justify-center py-20">
                     <motion.div
@@ -430,11 +429,7 @@ export default function ProductsPage() {
                     {/* Products Grid */}
                     <motion.div
                       layout
-                      className={`grid gap-6 ${
-                        viewMode === 'grid'
-                          ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
-                          : 'grid-cols-1'
-                      }`}
+                      className={`grid gap-3 sm:gap-4 lg:gap-6 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-fr`}
                     >
                       <AnimatePresence mode="popLayout">
                         {products.map((product, index) => (
@@ -446,13 +441,16 @@ export default function ProductsPage() {
                             exit={{ opacity: 0, scale: 0.8 }}
                             transition={{
                               duration: 0.3,
-                              delay: index * 0.1,
+                              delay: index * 0.05,
                               type: 'spring',
                               stiffness: 200,
                               damping: 20,
                             }}
                           >
-                            <ProductCard product={product} />
+                            <ProductCard
+                              product={product}
+                              onProductUpdate={handleProductUpdate}
+                            />
                           </motion.div>
                         ))}
                       </AnimatePresence>

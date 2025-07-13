@@ -74,29 +74,29 @@ export default function Navbar() {
       transition={{ duration: 0.4, ease: 'easeOut' }}
       className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-md shadow border-b border-neutral-200"
     >
-      <div className="mx-auto flex items-center justify-between gap-y-2 px-4 sm:px-6 lg:px-8 py-3 max-w-7xl">
-        <div className="flex items-center gap-4">
+      <div className="mx-auto flex items-center justify-between gap-y-2 px-3 sm:px-4 lg:px-6 xl:px-8 py-2 sm:py-3 max-w-7xl">
+        <div className="flex items-center gap-3 sm:gap-4">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="text-neutral-700 focus:outline-none"
             aria-label="Toggle Menu"
           >
             {menuOpen ? (
-              <X className="lg:hidden h-6 w-6" />
+              <X className="lg:hidden h-5 w-5 sm:h-6 sm:w-6" />
             ) : (
-              <Menu className=" lg:hidden h-6 w-6" />
+              <Menu className="lg:hidden h-5 w-5 sm:h-6 sm:w-6" />
             )}
           </button>
 
           <Link
             href="/"
-            className="text-xl sm:text-2xl font-bold tracking-tight text-amber-900 flex items-center gap-2"
+            className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight text-amber-900 flex items-center gap-2"
           >
-            <span className="font-serif">Naty’s Handycrafts</span>
+            <span className="font-serif">Naty&apos;s Handycrafts</span>
           </Link>
         </div>
 
-        <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-neutral-700">
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-6 text-sm font-medium text-neutral-700">
           <Link href="/products" className="hover:text-amber-800 transition">
             Products
           </Link>
@@ -119,21 +119,21 @@ export default function Navbar() {
           )}
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 sm:gap-4">
           <form
             onSubmit={handleSearchSubmit}
-            className="hidden md:flex items-center w-80 xl:w-[28rem] 2xl:w-[32rem]"
+            className="hidden md:flex items-center w-64 lg:w-80 xl:w-[28rem] 2xl:w-[32rem]"
           >
             <div className="relative w-full">
               <span className="absolute inset-y-0 left-3 flex items-center text-neutral-400">
-                <Search size={16} />
+                <Search size={14} className="sm:w-4 sm:h-4" />
               </span>
               <input
                 type="text"
                 placeholder="Search products..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-sm border border-amber-300 rounded-full bg-white focus:outline-none focus:ring-1 focus:ring-amber-400 "
+                className="w-full pl-8 sm:pl-9 pr-3 sm:pr-4 py-1.5 sm:py-2 text-xs sm:text-sm border border-amber-300 rounded-full bg-white focus:outline-none focus:ring-1 focus:ring-amber-400"
               />
             </div>
           </form>
@@ -143,13 +143,13 @@ export default function Navbar() {
             onClick={() => setShowMobileSearch(!showMobileSearch)}
             aria-label="Open search"
           >
-            <Search className="h-6 w-6 text-neutral-700 hover:text-amber-800 transition" />
+            <Search className="h-5 w-5 sm:h-6 sm:w-6 text-neutral-700 hover:text-amber-800 transition" />
           </button>
 
           <Link href="/cart" className="relative" aria-label="Cart">
-            <ShoppingCart className="h-6 w-6 text-neutral-700 hover:text-amber-800 transition" />
+            <ShoppingCart className="h-5 w-5 sm:h-6 sm:w-6 text-neutral-700 hover:text-amber-800 transition" />
             {hasMounted && cartCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+              <span className="absolute -top-1.5 sm:-top-2 -right-1.5 sm:-right-2 bg-red-600 text-white text-[8px] sm:text-[10px] font-bold px-1 sm:px-1.5 py-0.5 rounded-full">
                 {cartCount}
               </span>
             )}
@@ -159,9 +159,9 @@ export default function Navbar() {
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setProfileOpen(!profileOpen)}
-                className="flex items-center gap-2 text-sm text-neutral-700 hover:text-amber-800"
+                className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-neutral-700 hover:text-amber-800"
               >
-                <User className="h-6 w-6" />
+                <User className="h-5 w-5 sm:h-6 sm:w-6" />
                 <span className="hidden md:inline">
                   {user?.fullName?.split(' ')[0] || 'User'}
                 </span>

@@ -18,7 +18,6 @@ export async function POST(req: Request) {
     // Validate required fields
     const requiredFields = [
       address?.street,
-      address?.brgy,
       address?.city,
       address?.province,
       address?.postalCode,

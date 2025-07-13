@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { TrendingUp, Package } from 'lucide-react';
+import { TrendingUp, Star, Award } from 'lucide-react';
 import type { Product } from '@/types/product';
 
 interface SoldQuantityInfoProps {
@@ -9,35 +9,41 @@ interface SoldQuantityInfoProps {
 }
 
 const SoldQuantityInfo: React.FC<SoldQuantityInfoProps> = ({ product }) => {
-  if (!product.soldQuantity || product.soldQuantity === 0) {
-    return null;
-  }
+  const soldQuantity = product.soldQuantity || 0;
+  const isPopular = soldQuantity > 10;
+  const isBestSeller = soldQuantity > 50;
+  const isTrending = soldQuantity > 20;
 
   return (
-    <div className="flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-      <div className="flex items-center gap-2">
-        <TrendingUp className="w-5 h-5 text-green-600" />
-        <span className="text-sm font-medium text-green-800">
-          {product.soldQuantity} sold
+    <div className="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg border border-amber-200">
+      <div className="flex items-center gap-1.5 sm:gap-2">
+        <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-amber-600" />
+        <span className="text-xs sm:text-sm font-medium text-amber-800">
+          {soldQuantity} sold
         </span>
       </div>
 
-      {product.stock > 0 && (
-        <div className="flex items-center gap-2">
-          <Package className="w-4 h-4 text-gray-500" />
-          <span className="text-sm text-gray-600">
-            {product.stock} in stock
+      {/* Popularity Badges */}
+      <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+        {isBestSeller && (
+          <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <Award className="w-2.5 h-2.5" />
+            Best Seller
           </span>
-        </div>
-      )}
-
-      {product.soldQuantity > 10 && (
-        <div className="ml-auto">
-          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            Popular Item
+        )}
+        {isPopular && !isBestSeller && (
+          <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <Star className="w-2.5 h-2.5" />
+            Popular
           </span>
-        </div>
-      )}
+        )}
+        {isTrending && !isPopular && (
+          <span className="inline-flex items-center gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            <TrendingUp className="w-2.5 h-2.5" />
+            Trending
+          </span>
+        )}
+      </div>
     </div>
   );
 };

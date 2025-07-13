@@ -19,7 +19,8 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
 
-    const { items, totalAmount, paymentMethod, status, address } = body;
+    const { items, totalAmount, paymentMethod, status, address, location } =
+      body;
 
     if (!items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -31,7 +32,6 @@ export async function POST(req: NextRequest) {
     if (
       !address ||
       !address.street ||
-      !address.brgy ||
       !address.city ||
       !address.province ||
       !address.postalCode
@@ -50,14 +50,38 @@ export async function POST(req: NextRequest) {
       quantity: item.quantity,
     }));
 
-    const order = await Order.create({
+    // Prepare order data with location
+    const orderData: {
+      user: Types.ObjectId;
+      items: typeof orderItems;
+      totalAmount: number;
+      paymentMethod: string;
+      status: string;
+      address: typeof address;
+      location?: {
+        lat: number;
+        lng: number;
+        formattedAddress?: string;
+      };
+    } = {
       user: new Types.ObjectId(session.user.id),
       items: orderItems,
       totalAmount,
       paymentMethod: paymentMethod || 'cod',
       status: status || 'pending',
       address,
-    });
+    };
+
+    // Add location data if provided
+    if (location && location.lat && location.lng) {
+      orderData.location = {
+        lat: location.lat,
+        lng: location.lng,
+        formattedAddress: location.formattedAddress,
+      };
+    }
+
+    const order = await Order.create(orderData);
 
     // 🆕 Update product sold quantities for COD orders immediately
     if (paymentMethod === 'cod') {

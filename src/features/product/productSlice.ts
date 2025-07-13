@@ -73,6 +73,14 @@ const productSlice = createSlice({
         (p) => p._id === action.payload._id
       );
       if (index !== -1) state.products[index] = action.payload;
+
+      // Also update selectedProduct if it's the same product
+      if (
+        state.selectedProduct &&
+        state.selectedProduct._id === action.payload._id
+      ) {
+        state.selectedProduct = action.payload;
+      }
     },
     setQuery(state, action: PayloadAction<string>) {
       state.query = action.payload;

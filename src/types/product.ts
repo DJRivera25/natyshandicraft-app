@@ -29,7 +29,7 @@ export interface Product {
 }
 
 export interface Review {
-  user: string;
+  user: string | { _id: string; fullName: string; email: string };
   rating: number;
   comment: string;
   createdAt?: Date;

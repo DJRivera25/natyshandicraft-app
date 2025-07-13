@@ -1,19 +1,25 @@
 'use client';
 
-import { useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useEffect, useState, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
-import { fetchProductByIdThunk } from '@/features/product/productThunk';
+import {
+  fetchProductByIdThunk,
+  updateProductThunk,
+} from '@/features/product/productThunk';
 import ProductDetails from '@/components/ProductDetails';
+import EditProductModal from '@/components/EditProductModal';
 import Breadcrumb from '@/components/BreadCrumb';
 import { motion } from 'framer-motion';
 import { AlertCircle, Package } from 'lucide-react';
 import NewsletterOverlay from '@/components/NewsletterOverlay';
 import Footer from '@/components/Footer';
+import type { UpdateProductInput } from '@/types/product';
 
 export default function ProductDetailPage() {
   const params = useParams() as { id: string };
+  const router = useRouter();
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const isAdmin = session?.user?.isAdmin;
@@ -22,11 +28,46 @@ export default function ProductDetailPage() {
     (state) => state.product
   );
 
+  // Modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
   useEffect(() => {
     if (params?.id) {
       dispatch(fetchProductByIdThunk(params.id));
     }
   }, [dispatch, params?.id]);
+
+  // Admin handlers
+  const handleEdit = useCallback(() => {
+    setIsEditModalOpen(true);
+  }, []);
+
+  const handleDelete = useCallback(() => {
+    if (
+      confirm(
+        'Are you sure you want to delete this product? This action cannot be undone.'
+      )
+    ) {
+      // Handle delete logic here
+      router.push('/products');
+    }
+  }, [router]);
+
+  const handleToggleActive = useCallback(() => {
+    // Handle toggle active logic here
+    console.log('Toggle active');
+  }, []);
+
+  const handleProductUpdate = useCallback(
+    (updatedProduct: UpdateProductInput & { imageFile?: File | null }) => {
+      setIsEditModalOpen(false);
+      // Update the product using the thunk
+      if (params?.id) {
+        dispatch(updateProductThunk(params.id, updatedProduct));
+      }
+    },
+    [dispatch, params?.id]
+  );
 
   if (loading) {
     return (
@@ -99,7 +140,13 @@ export default function ProductDetailPage() {
         transition={{ duration: 0.5 }}
       >
         <div className="pb-32">
-          <ProductDetails product={selectedProduct} isAdmin={isAdmin} />
+          <ProductDetails
+            product={selectedProduct}
+            isAdmin={isAdmin}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+            onToggleActive={handleToggleActive}
+          />
         </div>
       </motion.div>
       {/* Newsletter Overlay */}
@@ -109,6 +156,15 @@ export default function ProductDetailPage() {
       <div className="mt-[-48px]">
         <Footer />
       </div>
+
+      {/* Edit Product Modal */}
+      {isEditModalOpen && selectedProduct && (
+        <EditProductModal
+          product={selectedProduct}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleProductUpdate}
+        />
+      )}
     </>
   );
 }

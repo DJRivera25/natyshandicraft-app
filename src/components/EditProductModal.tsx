@@ -62,7 +62,7 @@ const pricingFields = [
     label: 'Price',
     placeholder: '0.00',
     required: true,
-    prefix: '₱',
+    prefix: '',
   },
   {
     name: 'discountPercent',
@@ -196,14 +196,18 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
     const { name, value, type, checked, files } = e.target as HTMLInputElement;
     if (type === 'file') {
       const file = files?.[0] || null;
-      setImageFile(file);
-      if (file) {
-        const reader = new FileReader();
-        reader.onloadend = () => setPreviewUrl(reader.result as string);
-        reader.readAsDataURL(file);
-      } else {
-        setPreviewUrl(product.imageUrl || null);
+      // Only handle main image file input here
+      if (name === 'mainImage' || !name) {
+        setImageFile(file);
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => setPreviewUrl(reader.result as string);
+          reader.readAsDataURL(file);
+        } else {
+          setPreviewUrl(product.imageUrl || null);
+        }
       }
+      // Additional images are handled by handleImageUpload function
     } else if (type === 'checkbox') {
       setFormData((prev) => ({ ...prev, [name]: checked }));
     } else if (name === 'availableFrom' || name === 'availableUntil') {
@@ -223,6 +227,17 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
           ? parseFloat(value)
           : value,
       }));
+    }
+  };
+
+  const handleAdditionalImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      Array.from(files).forEach((file) => {
+        handleImageUpload(file);
+      });
     }
   };
 
@@ -255,10 +270,17 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
     reader.onloadend = () => {
       const imageUrl = reader.result as string;
       if (!formData.perspectives?.includes(imageUrl)) {
-        setFormData((prev) => ({
-          ...prev,
-          perspectives: [...(prev.perspectives || []), imageUrl],
-        }));
+        setFormData((prev) => {
+          const currentPerspectives = prev.perspectives || [];
+          // Limit to 3 perspective images
+          if (currentPerspectives.length >= 3) {
+            return prev; // Don't add more if already at limit
+          }
+          return {
+            ...prev,
+            perspectives: [...currentPerspectives, imageUrl],
+          };
+        });
       }
     };
     reader.readAsDataURL(file);
@@ -298,7 +320,7 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
       value: stringValue,
       onChange: handleChange,
       className:
-        'w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-xs',
+        'w-full px-1.5 sm:px-2 py-1 sm:py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-xs',
       placeholder: field.placeholder,
       required: field.required,
       min: field.min,
@@ -329,13 +351,13 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
             {field.required && <span className="text-red-500">*</span>}
           </label>
           <div className="relative">
-            <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs">
+            <span className="absolute left-1.5 sm:left-2 top-1/2 transform -translate-y-1/2 text-gray-500 text-xs">
               {field.prefix}
             </span>
             <input
               {...commonProps}
               type={field.type}
-              className={commonProps.className + ' pl-5 pr-2'}
+              className={commonProps.className + ' pl-4 sm:pl-5 pr-2'}
             />
           </div>
         </div>
@@ -364,9 +386,11 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
         name={field.name}
         checked={!!formData[field.name as keyof UpdateProductInput]}
         onChange={handleChange}
-        className="w-3 h-3 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+        className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
       />
-      {field.icon && <field.icon className="w-3 h-3 text-amber-500" />}
+      {field.icon && (
+        <field.icon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-amber-500" />
+      )}
       <span className="text-xs text-gray-700 group-hover:text-gray-900">
         {field.label}
       </span>
@@ -383,6 +407,7 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
     fileRef,
     multiple = false,
     showPreview = true,
+    inputName = '',
   }: {
     title: string;
     isDragOver: boolean;
@@ -393,73 +418,101 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
     fileRef: React.RefObject<HTMLInputElement | null>;
     multiple?: boolean;
     showPreview?: boolean;
-  }) => (
-    <div className="space-y-1">
-      <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1">
-        <div className="w-1 h-1 bg-amber-500 rounded-full"></div>
-        {title}
-      </h3>
-      <div
-        className={`border-2 border-dashed rounded-lg p-2 text-center transition-all ${
-          isDragOver
-            ? 'border-amber-500 bg-amber-50'
-            : 'border-gray-300 hover:border-amber-400'
-        }`}
-        onDragOver={(e) => handleDragDrop(e, setIsDragOver, onUpload)}
-        onDragLeave={(e) => handleDragDrop(e, setIsDragOver, onUpload)}
-        onDrop={(e) => handleDragDrop(e, setIsDragOver, onUpload)}
-      >
-        {preview && showPreview ? (
-          <div className="space-y-1">
-            <img
-              src={preview}
-              alt="Preview"
-              className="w-full h-16 object-cover rounded-lg mx-auto"
-            />
-            <button
-              type="button"
-              onClick={onRemove}
-              className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors flex items-center gap-1 mx-auto"
-            >
-              <Trash2 className="w-2.5 h-2.5" /> Remove
-            </button>
-          </div>
-        ) : (
-          <div className="space-y-1">
-            <Upload className="w-4 h-4 text-gray-400 mx-auto" />
-            <p className="text-xs text-gray-600">
-              Drag & drop or click to browse
-            </p>
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="px-2 py-0.5 bg-amber-600 text-white rounded text-xs hover:bg-amber-700 transition-colors"
-            >
-              Choose File
-            </button>
-          </div>
-        )}
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          multiple={multiple}
-          onChange={handleChange}
-          className="hidden"
-        />
+    inputName?: string;
+  }) => {
+    const isLimitReached =
+      inputName === 'additionalImages' &&
+      (formData.perspectives?.length || 0) >= 3;
+
+    return (
+      <div className="space-y-1">
+        <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1">
+          <div className="w-1 h-1 bg-amber-500 rounded-full"></div>
+          {title}
+        </h3>
+        <div
+          className={`border-2 border-dashed rounded-lg p-1.5 sm:p-2 text-center transition-all ${
+            isLimitReached
+              ? 'border-gray-200 bg-gray-50 cursor-not-allowed'
+              : isDragOver
+                ? 'border-amber-500 bg-amber-50'
+                : 'border-gray-300 hover:border-amber-400'
+          }`}
+          onDragOver={(e) =>
+            !isLimitReached && handleDragDrop(e, setIsDragOver, onUpload)
+          }
+          onDragLeave={(e) =>
+            !isLimitReached && handleDragDrop(e, setIsDragOver, onUpload)
+          }
+          onDrop={(e) =>
+            !isLimitReached && handleDragDrop(e, setIsDragOver, onUpload)
+          }
+        >
+          {isLimitReached ? (
+            <div className="space-y-1">
+              <Upload className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 mx-auto" />
+              <p className="text-xs text-gray-500">
+                Maximum 3 additional images reached
+              </p>
+            </div>
+          ) : preview && showPreview ? (
+            <div className="space-y-1">
+              <img
+                src={preview}
+                alt="Preview"
+                className="w-full h-12 sm:h-16 object-contain rounded-lg mx-auto bg-gray-50"
+              />
+              <button
+                type="button"
+                onClick={onRemove}
+                className="px-1.5 sm:px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs hover:bg-red-200 transition-colors flex items-center gap-1 mx-auto"
+              >
+                <Trash2 className="w-2 h-2 sm:w-2.5 sm:h-2.5" /> Remove
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-1">
+              <Upload className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 mx-auto" />
+              <p className="text-xs text-gray-600">
+                Drag & drop or click to browse
+              </p>
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="px-1.5 sm:px-2 py-0.5 bg-amber-600 text-white rounded text-xs hover:bg-amber-700 transition-colors"
+              >
+                Choose File
+              </button>
+            </div>
+          )}
+          <input
+            ref={fileRef}
+            type="file"
+            name={inputName}
+            accept="image/*"
+            multiple={multiple}
+            onChange={
+              inputName === 'mainImage'
+                ? handleChange
+                : handleAdditionalImageChange
+            }
+            className="hidden"
+            disabled={isLimitReached}
+          />
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2">
-      <div className="w-full max-w-4xl bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 sm:p-4">
+      <div className="w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2 border-b border-amber-200">
+        <div className="bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-2 border-b border-amber-200 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-amber-900 flex items-center gap-1">
-                <ImageIcon className="w-4 h-4" />
+              <h2 className="text-base sm:text-lg font-bold text-amber-900 flex items-center gap-1">
+                <ImageIcon className="w-3 h-3 sm:w-4 sm:h-4" />
                 Edit Product
               </h2>
               <p className="text-amber-700 text-xs">
@@ -475,17 +528,20 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-3">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <form
+          onSubmit={handleSubmit}
+          className="p-2 sm:p-3 flex-1 overflow-y-auto"
+        >
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
             {/* Left Column */}
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {/* Basic Info */}
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1">
                   <div className="w-1 h-1 bg-amber-500 rounded-full"></div>
                   Basic Information
                 </h3>
-                <div className="space-y-1.5">
+                <div className="space-y-1 sm:space-y-1.5">
                   {basicFields.map((field, index) => (
                     <div
                       key={field.name}
@@ -493,7 +549,7 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
                         index === 1
                           ? ''
                           : index === 2 || index === 3
-                            ? 'grid grid-cols-2 gap-1.5'
+                            ? 'grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-1.5'
                             : ''
                       }
                     >
@@ -506,18 +562,18 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
               </div>
 
               {/* Pricing */}
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1">
                   <div className="w-1 h-1 bg-green-500 rounded-full"></div>
                   Pricing & Discounts
                 </h3>
-                <div className="space-y-1.5">
-                  <div className="grid grid-cols-2 gap-1.5">
+                <div className="space-y-1 sm:space-y-1.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-1.5">
                     {pricingFields.map((field) => (
                       <div key={field.name}>{renderField(field)}</div>
                     ))}
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     {checkboxFields
                       .slice(0, 2)
                       .map((field) => renderCheckbox(field))}
@@ -531,7 +587,7 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
                       name="promoText"
                       value={formData.promoText}
                       onChange={handleChange}
-                      className="w-full px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-xs"
+                      className="w-full px-1.5 sm:px-2 py-1 sm:py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-xs"
                       placeholder="e.g., Limited time offer! Free shipping"
                     />
                   </div>
@@ -539,12 +595,12 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
               </div>
 
               {/* Tags */}
-              <div className="space-y-1.5">
+              <div className="space-y-1 sm:space-y-1.5">
                 <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1">
                   <Tag className="w-3 h-3 text-blue-500" />
                   Tags
                 </h3>
-                <div className="space-y-1.5">
+                <div className="space-y-1 sm:space-y-1.5">
                   <div className="flex gap-1">
                     <input
                       type="text"
@@ -554,13 +610,13 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
                         e.key === 'Enter' &&
                         (e.preventDefault(), handleTagAdd())
                       }
-                      className="flex-1 px-2 py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-xs"
+                      className="flex-1 px-1.5 sm:px-2 py-1 sm:py-1.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-xs"
                       placeholder="Add tag and press Enter"
                     />
                     <button
                       type="button"
                       onClick={handleTagAdd}
-                      className="px-2 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-1 text-xs"
+                      className="px-2 py-1 sm:py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center gap-1 text-xs"
                     >
                       <Plus className="w-2.5 h-2.5" /> Add
                     </button>
@@ -587,7 +643,7 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
             </div>
 
             {/* Right Column */}
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {/* Main Image */}
               <ImageUploadZone
                 title="Main Product Image"
@@ -606,34 +662,36 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
                   setPreviewUrl(null);
                 }}
                 fileRef={fileInputRef}
+                inputName="mainImage"
               />
 
               {/* Perspective Images */}
               <ImageUploadZone
-                title="Additional Images"
+                title={`Additional Images (${formData.perspectives?.length || 0}/3)`}
                 isDragOver={isPerspectiveDragOver}
                 setIsDragOver={setIsPerspectiveDragOver}
                 onUpload={handleImageUpload}
                 fileRef={perspectiveFileInputRef}
                 multiple={true}
                 showPreview={false}
+                inputName="additionalImages"
               />
 
               {formData.perspectives && formData.perspectives.length > 0 && (
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
                   {formData.perspectives.map((p, index) => (
                     <div key={index} className="relative group">
                       <img
                         src={p}
                         alt={`Perspective ${index + 1}`}
-                        className="w-full h-12 object-cover rounded-lg"
+                        className="w-full h-12 sm:h-16 object-contain rounded-lg bg-gray-50"
                       />
                       <button
                         type="button"
                         onClick={() => handlePerspectiveRemove(p)}
-                        className="absolute -top-0.5 -right-0.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                        className="absolute -top-0.5 -right-0.5 bg-red-500 text-white rounded-full w-3 h-3 sm:w-4 sm:h-4 flex items-center justify-center hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
                       >
-                        <X className="w-2 h-2" />
+                        <X className="w-1.5 h-1.5 sm:w-2 sm:h-2" />
                       </button>
                     </div>
                   ))}
@@ -641,18 +699,18 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
               )}
 
               {/* Inventory & Settings */}
-              <div className="space-y-2">
+              <div className="space-y-1.5 sm:space-y-2">
                 <h3 className="text-xs font-semibold text-gray-900 flex items-center gap-1">
                   <div className="w-1 h-1 bg-blue-500 rounded-full"></div>
                   Inventory & Settings
                 </h3>
-                <div className="space-y-1.5">
-                  <div className="grid grid-cols-2 gap-1.5">
+                <div className="space-y-1 sm:space-y-1.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-1.5">
                     {inventoryFields.map((field) => (
                       <div key={field.name}>{renderField(field)}</div>
                     ))}
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     {renderCheckbox(checkboxFields[2])}
                     <div className="space-y-0.5">
                       <label className="block text-xs font-medium text-gray-700">
@@ -672,7 +730,7 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
                       </select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-1.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-1.5">
                     {dateFields.map((field) => (
                       <div key={field.name}>{renderField(field)}</div>
                     ))}
@@ -683,7 +741,7 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
           </div>
 
           {/* Footer Actions */}
-          <div className="flex justify-end gap-2 mt-4 pt-3 border-t border-gray-200">
+          <div className="flex justify-end gap-2 mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-gray-200 flex-shrink-0">
             <button
               type="button"
               onClick={onClose}

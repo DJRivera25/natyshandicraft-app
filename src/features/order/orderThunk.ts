@@ -3,6 +3,7 @@ import {
   apiCreateOrder,
   apiFetchOrders,
   apiFetchOrderById,
+  apiCancelOrder,
 } from '@/utils/api/order';
 import {
   setOrders,
@@ -10,6 +11,7 @@ import {
   setLoading,
   setError,
   addOrder,
+  updateOrder,
 } from './orderSlice';
 import type { CreateOrderInput, Order } from '@/types/order';
 
@@ -65,6 +67,25 @@ export const createOrderThunk =
         error instanceof Error ? error.message : 'Failed to create order';
       dispatch(setError(message));
       throw new Error(message); // ✅ Fix: throw for caller
+    } finally {
+      dispatch(setLoading(false));
+    }
+  };
+
+// ✅ Cancel an order
+export const cancelOrderThunk =
+  (orderId: string) => async (dispatch: AppDispatch) => {
+    dispatch(setLoading(true));
+    try {
+      const cancelledOrder: Order = await apiCancelOrder(orderId);
+      dispatch(updateOrder(cancelledOrder));
+      dispatch(setError(null));
+      return cancelledOrder;
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Failed to cancel order';
+      dispatch(setError(message));
+      throw new Error(message);
     } finally {
       dispatch(setLoading(false));
     }

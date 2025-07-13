@@ -41,10 +41,10 @@ const ProductSidebar: React.FC<ProductSidebarProps> = ({
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [expandedSections, setExpandedSections] = useState({
-    search: true,
-    price: true,
-    category: true,
-    features: true,
+    search: false,
+    price: false,
+    category: false,
+    features: false,
   });
 
   // Special features state

@@ -9,7 +9,6 @@ export interface IUser extends Document {
   wishlist?: Types.ObjectId[];
   address?: {
     street: string;
-    brgy: string;
     city: string;
     province: string;
     postalCode: string;
@@ -27,7 +26,6 @@ const UserSchema = new Schema<IUser>(
     wishlist: [{ type: Schema.Types.ObjectId, ref: 'Product' }],
     address: {
       street: { type: String },
-      brgy: { type: String },
       city: { type: String },
       province: { type: String },
       postalCode: { type: String },

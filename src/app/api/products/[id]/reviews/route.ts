@@ -21,6 +21,7 @@ export async function GET(
   }
   const product = await Product.findById(productId)
     .select('reviews')
+    .populate('reviews.user', 'fullName email')
     .lean<IProduct | null>();
   if (!product) {
     return NextResponse.json({ message: 'Product not found' }, { status: 404 });

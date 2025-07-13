@@ -1,15 +1,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-type Address = {
+interface Address {
   street: string;
-  brgy: string;
   city: string;
   province: string;
   postalCode: string;
   country: string;
-};
+}
 
-type User = {
+interface User {
   id: string;
   email: string;
   mobileNumber?: string;
@@ -17,12 +16,12 @@ type User = {
   birthDate?: string;
   isAdmin: boolean;
   address?: Address;
-};
+}
 
-type AuthState = {
+interface AuthState {
   user: User | null;
   isProfileComplete: boolean;
-};
+}
 
 const initialState: AuthState = {
   user: null,

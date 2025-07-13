@@ -14,13 +14,18 @@ export interface IOrder extends Document {
   status?: 'pending' | 'paid' | 'cancelled';
   paymentMethod?: string;
   paidAt?: Date;
+  cancelledAt?: Date;
   address: {
     street: string;
-    brgy: string; // ✅ added
     city: string;
     province: string;
     postalCode: string;
     country: string;
+  };
+  location?: {
+    lat: number;
+    lng: number;
+    formattedAddress?: string;
   };
 }
 
@@ -30,6 +35,15 @@ const OrderItemSchema = new Schema<IOrderItem>(
     name: { type: String, required: true },
     price: { type: Number, required: true },
     quantity: { type: Number, required: true },
+  },
+  { _id: false }
+);
+
+const LocationSchema = new Schema(
+  {
+    lat: { type: Number, required: true },
+    lng: { type: Number, required: true },
+    formattedAddress: { type: String },
   },
   { _id: false }
 );
@@ -46,14 +60,15 @@ const OrderSchema = new Schema<IOrder>(
     },
     paymentMethod: { type: String },
     paidAt: { type: Date },
+    cancelledAt: { type: Date },
     address: {
       street: { type: String, required: true },
-      brgy: { type: String, required: true }, // ✅ added
       city: { type: String, required: true },
       province: { type: String, required: true },
       postalCode: { type: String, required: true },
-      country: { type: String, default: 'Philippines' },
+      country: { type: String, required: true },
     },
+    location: LocationSchema,
   },
   { timestamps: true }
 );

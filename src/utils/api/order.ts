@@ -26,3 +26,13 @@ export const apiFetchOrderById = async (id: string): Promise<Order> => {
   const response = await axiosInstance.get(`/order/${id}`);
   return response.data;
 };
+
+/**
+ * Cancel an order.
+ */
+export const apiCancelOrder = async (id: string): Promise<Order> => {
+  const response = await axiosInstance.patch(`/order/${id}`, {
+    action: 'cancel',
+  });
+  return response.data.order;
+};

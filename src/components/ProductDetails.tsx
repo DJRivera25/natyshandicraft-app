@@ -217,17 +217,19 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   return (
     <div className="w-full">
       {/* Product Gallery Section */}
-      <section className="w-full flex flex-col lg:flex-row gap-8 p-6 lg:p-8 max-w-7xl mx-auto">
+      <section className="w-full flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 p-3 sm:p-4 lg:p-6 xl:p-8 max-w-7xl mx-auto">
         {/* Gallery */}
-        <ProductGallery
-          product={updatedProduct}
-          selectedImageIndex={selectedImageIndex}
-          onImageSelect={setSelectedImageIndex}
-        />
+        <div className="w-full lg:w-2/3 flex items-start">
+          <ProductGallery
+            product={updatedProduct}
+            selectedImageIndex={selectedImageIndex}
+            onImageSelect={setSelectedImageIndex}
+          />
+        </div>
 
         {/* Product Information */}
-        <div className="flex-1 flex flex-col min-w-0 justify-between">
-          <div className="space-y-4">
+        <div className="w-full lg:w-1/3 flex flex-col min-w-0">
+          <div className="space-y-3 sm:space-y-4">
             {/* Product Header */}
             <ProductHeader
               product={updatedProduct}
@@ -251,8 +253,11 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
               discountAmount={discountAmount}
             />
 
-            {/* Stock Status */}
-            <StockStatus product={updatedProduct} />
+            {/* Stock & Sales Info */}
+            <div className="space-y-2 sm:space-y-3">
+              <StockStatus product={updatedProduct} isAdmin={isAdmin} />
+              <SoldQuantityInfo product={updatedProduct} />
+            </div>
 
             {/* Description */}
             <ProductDescription product={updatedProduct} />
@@ -262,9 +267,6 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
 
             {/* Availability */}
             <ProductAvailability product={updatedProduct} />
-
-            {/* Sold Quantity Info */}
-            <SoldQuantityInfo product={updatedProduct} />
           </div>
 
           {/* Add to Cart Section */}

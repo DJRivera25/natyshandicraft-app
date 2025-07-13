@@ -13,7 +13,7 @@ export default function PageWrapper({
       initial={{ opacity: 0, scale: 0.97 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className="flex h-screen flex-col px-6  sm:px-12 relative"
+      className="flex min-h-screen flex-col px-2 sm:px-4 md:px-6 lg:px-8 relative"
     >
       {/* Background pattern */}
       <div

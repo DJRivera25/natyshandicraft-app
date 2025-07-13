@@ -2,19 +2,25 @@
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import {
-  incrementQuantity,
-  decrementQuantity,
-} from '@/features/cart/cartSlice';
-import {
   fetchCartThunk,
   removeFromCartThunk,
   saveCartThunk,
 } from '@/features/cart/cartThunk';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Trash2, Plus, Minus } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
 import { useHasMounted } from '@/utils/useHasMounted';
-import Image from 'next/image';
+import PageWrapper from '@/components/PageWrapper';
+import { CartHeader, CartLayout, EmptyCart } from '@/components/Cart';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Sparkles,
+  ShoppingBag,
+  ArrowRight,
+  Package,
+  Truck,
+  Shield,
+  CreditCard,
+} from 'lucide-react';
 
 export default function CartPage() {
   const dispatch = useAppDispatch();
@@ -23,9 +29,13 @@ export default function CartPage() {
 
   const { items } = useAppSelector((state) => state.cart);
   const user = useAppSelector((state) => state.auth.user);
+  const isProfileComplete = useAppSelector(
+    (state) => state.auth.isProfileComplete
+  );
   const userId = user?.id;
 
-  const [progress, setProgress] = useState(0);
+  const [removingItem, setRemovingItem] = useState<string | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   useEffect(() => {
     if (userId) {
@@ -33,163 +43,267 @@ export default function CartPage() {
     }
   }, [dispatch, userId]);
 
-  useEffect(() => {
-    const animateSteps = () => {
-      setTimeout(() => setProgress(0), 1000);
-    };
-    animateSteps();
-  }, []);
-
-  // 🚨 Early return to prevent hydration issues
-  if (!hasMounted || !Array.isArray(items)) return null;
-
   const totalPrice = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
     0
   );
 
-  const handleCheckout = () => {
-    if (!userId) return;
-    dispatch(saveCartThunk({ user: userId, items }));
-    router.push('/order');
-  };
+  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleCheckout = useCallback(async () => {
+    if (!userId || !isProfileComplete) return;
+
+    setIsAnimating(true);
+    await dispatch(saveCartThunk({ user: userId, items }));
+
+    // Smooth transition to checkout
+    setTimeout(() => {
+      router.push('/order');
+    }, 300);
+  }, [userId, isProfileComplete, dispatch, items, router]);
+
+  const handleRemoveItem = useCallback(
+    async (productId: string) => {
+      setRemovingItem(productId);
+      try {
+        await dispatch(removeFromCartThunk(productId));
+      } finally {
+        setRemovingItem(null);
+      }
+    },
+    [dispatch]
+  );
+
+  // 🚨 Early return to prevent hydration issues
+  if (!hasMounted || !Array.isArray(items)) return null;
 
   if (items.length === 0) {
-    return (
-      <div className="p-10 text-center text-gray-500 text-lg">
-        Your cart is empty.
-      </div>
-    );
+    return <EmptyCart />;
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-10">
-      {/* Progress Bar */}
-      <div className="mb-8">
-        <div className="relative w-full h-6">
-          <div className="absolute top-1/2 left-0 w-full h-2 bg-gray-200 rounded-full -translate-y-1/2" />
-          <div
-            className="absolute top-1/2 left-0 h-2 bg-amber-500 transition-all duration-700 ease-in-out rounded-full -translate-y-1/2"
-            style={{ width: `${progress}%` }}
-          />
-          {[0, 50, 100].map((left, index) => (
-            <div
-              key={index}
-              className={`w-6 h-6 rounded-full text-[11px] font-bold flex items-center justify-center border-2 shadow-sm
-                absolute top-1/2 -translate-y-1/2 -translate-x-1/2 transition-colors duration-700
-                ${progress >= left ? 'bg-amber-600 border-amber-600 text-white' : 'bg-white border-gray-400 text-gray-400'}`}
-              style={{ left: `${left}%` }}
-            >
-              {index + 1}
-            </div>
-          ))}
-        </div>
-      </div>
+    <PageWrapper>
+      <div className="min-h-screen bg-gradient-to-br from-amber-50/30 via-white to-yellow-50/20">
+        {/* Enhanced Header with Progress Tracker */}
+        <CartHeader totalItems={totalItems} />
 
-      <h1 className="text-3xl font-bold mb-8 text-amber-900">Your Cart</h1>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-10">
-        {/* Cart Items */}
-        <div className="space-y-5">
-          {items.map((item) => (
-            <div
-              key={item.productId}
-              className="flex items-center gap-5 rounded-xl border border-amber-200 bg-white px-4 py-4 shadow-sm hover:shadow-md transition"
-            >
-              <Image
-                src={item.image}
-                alt={item.name}
-                width={80}
-                height={80}
-                className="h-20 w-20 rounded object-cover border"
-              />
-
-              <div className="flex flex-col justify-between w-full h-full">
-                <div className="flex justify-between items-center mb-1">
-                  <p className="text-base font-medium text-amber-900 truncate w-40">
-                    {item.name}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    ₱{item.price.toFixed(2)}{' '}
-                    <span className="text-xs text-gray-400">each</span>
-                  </p>
-                </div>
-
-                <div className="flex justify-between items-center text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() =>
-                        dispatch(decrementQuantity(item.productId))
-                      }
-                      className="rounded bg-gray-100 p-1 hover:bg-gray-200"
-                    >
-                      <Minus size={14} />
-                    </button>
-                    <span className="w-6 text-center font-semibold text-amber-800">
-                      {item.quantity}
-                    </span>
-                    <button
-                      onClick={() =>
-                        dispatch(incrementQuantity(item.productId))
-                      }
-                      className="rounded bg-gray-100 p-1 hover:bg-gray-200"
-                    >
-                      <Plus size={14} />
-                    </button>
+        {/* Main Content - Enhanced Layout */}
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-6 sm:py-8">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+            {/* Cart Items - Left Column */}
+            <div className="flex-1">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="space-y-4"
+              >
+                {/* Section Header */}
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl flex items-center justify-center">
+                      <ShoppingBag className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-bold text-amber-900">
+                        Shopping Cart
+                      </h2>
+                      <p className="text-sm text-amber-600">
+                        {totalItems} {totalItems === 1 ? 'item' : 'items'} in
+                        your cart
+                      </p>
+                    </div>
                   </div>
 
-                  <span className="text-sm font-medium text-amber-700">
-                    Subtotal: ₱{(item.price * item.quantity).toFixed(2)}
-                  </span>
-
-                  <button
-                    onClick={() =>
-                      dispatch(removeFromCartThunk(item.productId))
-                    }
-                    className="text-xs text-red-600 hover:text-red-700 flex items-center gap-1"
+                  {/* Quick Actions */}
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => router.push('/products')}
+                    className="flex items-center gap-2 px-4 py-2 bg-white border border-amber-200 rounded-xl hover:bg-amber-50 transition-all text-sm font-medium text-amber-700 shadow-sm"
                   >
-                    <Trash2 size={14} /> Remove
-                  </button>
+                    <ArrowRight className="w-4 h-4 rotate-180" />
+                    Continue Shopping
+                  </motion.button>
                 </div>
-              </div>
-            </div>
-          ))}
-        </div>
 
-        {/* Order Summary */}
-        <aside className="sticky top-24 self-start h-fit bg-amber-100 p-6 rounded-xl shadow-md border border-amber-200">
-          <h2 className="text-xl font-bold text-amber-900 mb-4">
-            Order Summary
-          </h2>
-
-          <div className="space-y-3 text-gray-800 text-sm">
-            <div className="flex justify-between">
-              <span>Total Items</span>
-              <span className="font-medium">
-                {items.reduce((sum, item) => sum + item.quantity, 0)}
-              </span>
+                {/* Cart Items */}
+                <CartLayout
+                  items={items}
+                  onRemoveItem={handleRemoveItem}
+                  removingItem={removingItem}
+                />
+              </motion.div>
             </div>
-            <div className="flex justify-between border-t pt-2 font-semibold text-amber-800">
-              <span>Total Price</span>
-              <span>₱{totalPrice.toFixed(2)}</span>
+
+            {/* Order Summary - Right Column */}
+            <div className="lg:w-96">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="sticky top-24 space-y-6"
+              >
+                {/* Enhanced Order Summary */}
+                <div className="bg-white rounded-2xl border border-amber-200/40 shadow-lg overflow-hidden">
+                  <div className="bg-gradient-to-r from-amber-50 to-yellow-50 px-6 py-4 border-b border-amber-200/40">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-bold text-amber-900 flex items-center gap-2">
+                        <Package className="w-5 h-5" />
+                        Order Summary
+                      </h3>
+                      <div className="flex items-center gap-1 px-3 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+                        <Sparkles className="w-3 h-3" />
+                        Free shipping
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6 space-y-4">
+                    {/* Price Breakdown */}
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-600">
+                          Subtotal ({totalItems} items)
+                        </span>
+                        <span className="font-semibold text-gray-800">
+                          {totalPrice.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-gray-100">
+                        <span className="text-gray-600 flex items-center gap-2">
+                          <Truck className="w-4 h-4 text-green-500" />
+                          Shipping
+                        </span>
+                        <span className="font-semibold text-green-600">
+                          Free
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center py-2">
+                        <span className="text-gray-600 flex items-center gap-2">
+                          <Shield className="w-4 h-4 text-blue-500" />
+                          Protection
+                        </span>
+                        <span className="font-semibold text-blue-600">
+                          Included
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Total */}
+                    <div className="border-t border-amber-200 pt-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-bold text-amber-900">
+                          Total
+                        </span>
+                        <span className="text-2xl font-bold text-amber-900">
+                          {totalPrice.toFixed(2)}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">
+                        All prices include applicable taxes
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile Status Warning */}
+                {(!userId || !isProfileComplete) && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl p-4"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <CreditCard className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-blue-900 mb-1">
+                          Complete your profile
+                        </h4>
+                        <p className="text-sm text-blue-700 mb-3">
+                          Please log in and add your shipping address to
+                          continue with checkout.
+                        </p>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => router.push('/complete-profile')}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+                        >
+                          Complete Profile
+                        </motion.button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Enhanced Checkout Button */}
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={handleCheckout}
+                  disabled={!userId || !isProfileComplete || isAnimating}
+                  className={`w-full py-4 px-6 rounded-2xl font-bold text-lg transition-all shadow-lg hover:shadow-xl ${
+                    !userId || !isProfileComplete
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      : 'bg-gradient-to-r from-amber-500 to-amber-600 text-white hover:from-amber-600 hover:to-amber-700'
+                  } ${isAnimating ? 'animate-pulse' : ''}`}
+                >
+                  <AnimatePresence mode="wait">
+                    {isAnimating ? (
+                      <motion.div
+                        key="loading"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center justify-center gap-3"
+                      >
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Processing...
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="checkout"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="flex items-center justify-center gap-3"
+                      >
+                        {!userId
+                          ? 'Login to Checkout'
+                          : !isProfileComplete
+                            ? 'Complete Profile to Checkout'
+                            : 'Proceed to Checkout'}
+                        <ArrowRight className="w-5 h-5" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+
+                {/* Trust Indicators */}
+                <div className="bg-gray-50 rounded-xl p-4">
+                  <div className="flex items-center justify-center gap-4 text-xs text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Shield className="w-3 h-3 text-green-500" />
+                      Secure Checkout
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Truck className="w-3 h-3 text-blue-500" />
+                      Free Shipping
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Package className="w-3 h-3 text-amber-500" />
+                      Quality Guarantee
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
             </div>
           </div>
-
-          <button
-            onClick={handleCheckout}
-            className="mt-6 w-full rounded-lg bg-amber-700 px-4 py-2 text-white font-semibold hover:bg-amber-800 transition"
-          >
-            Proceed to Checkout
-          </button>
-
-          <button
-            onClick={() => router.push('/products')}
-            className="mt-4 w-full rounded-md border border-amber-400 text-amber-600 py-1.5 text-sm hover:bg-amber-50 transition"
-          >
-            ← Back to Shop
-          </button>
-        </aside>
+        </div>
       </div>
-    </main>
+    </PageWrapper>
   );
 }

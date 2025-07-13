@@ -25,6 +25,17 @@ const orderSlice = createSlice({
     addOrder: (state, action: PayloadAction<Order>) => {
       state.orders.unshift(action.payload);
     },
+    updateOrder: (state, action: PayloadAction<Order>) => {
+      const index = state.orders.findIndex(
+        (order) => order._id === action.payload._id
+      );
+      if (index !== -1) {
+        state.orders[index] = action.payload;
+      }
+      if (state.selectedOrder?._id === action.payload._id) {
+        state.selectedOrder = action.payload;
+      }
+    },
     setSelectedOrder: (state, action: PayloadAction<Order | null>) => {
       state.selectedOrder = action.payload;
     },
@@ -45,6 +56,7 @@ const orderSlice = createSlice({
 export const {
   setOrders,
   addOrder,
+  updateOrder,
   setSelectedOrder,
   setLoading,
   setError,

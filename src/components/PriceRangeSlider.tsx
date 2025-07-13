@@ -1,6 +1,29 @@
 'use client';
 
 import React from 'react';
+import { Range, getTrackBackground } from 'react-range';
+
+export interface IThumbProps {
+  key: number;
+  style: React.CSSProperties;
+  tabIndex?: number;
+  'aria-label': string;
+  'aria-labelledby': string;
+  'aria-valuemax': number;
+  'aria-valuemin': number;
+  'aria-valuenow': number;
+  draggable: boolean;
+  role: string;
+  onKeyDown: (e: React.KeyboardEvent) => void;
+  onKeyUp: (e: React.KeyboardEvent) => void;
+} // copy paste from react-range interface
+
+export interface IRenderThumbParams {
+  props: IThumbProps;
+  value: number;
+  index: number;
+  isDragged: boolean;
+} // copy paste from react-range interface
 
 interface PriceRangeSliderProps {
   values: [number, number];
@@ -17,95 +40,48 @@ const PriceRangeSlider: React.FC<PriceRangeSliderProps> = ({
   max = 10000,
   step = 10,
 }) => {
-  const handleMinChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newMin = Number(e.target.value);
-    onChange([newMin, Math.max(newMin, values[1])]);
-  };
-
-  const handleMaxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newMax = Number(e.target.value);
-    onChange([Math.min(values[0], newMax), newMax]);
-  };
-
   return (
-    <div className="w-full space-y-4">
-      <div className="flex items-center justify-between text-sm text-gray-600">
-        <span>₱{values[0].toLocaleString()}</span>
-        <span>₱{values[1].toLocaleString()}</span>
-      </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 w-8">Min:</span>
-          <input
-            type="range"
-            min={min}
-            max={max}
-            step={step}
-            value={values[0]}
-            onChange={handleMinChange}
-            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-500 w-8">Max:</span>
-          <input
-            type="range"
-            min={min}
-            max={max}
-            step={step}
-            value={values[1]}
-            onChange={handleMaxChange}
-            className="flex-1 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-          />
-        </div>
-      </div>
-
-      <style jsx>{`
-        .slider::-webkit-slider-thumb {
-          appearance: none;
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #f59e0b;
-          cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .slider::-moz-range-thumb {
-          height: 16px;
-          width: 16px;
-          border-radius: 50%;
-          background: #f59e0b;
-          cursor: pointer;
-          border: none;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .slider::-webkit-slider-track {
-          background: linear-gradient(
-            to right,
-            #fcd34d 0%,
-            #f59e0b 50%,
-            #fcd34d 100%
-          );
-          height: 8px;
-          border-radius: 4px;
-        }
-
-        .slider::-moz-range-track {
-          background: linear-gradient(
-            to right,
-            #fcd34d 0%,
-            #f59e0b 50%,
-            #fcd34d 100%
-          );
-          height: 8px;
-          border-radius: 4px;
-          border: none;
-        }
-      `}</style>
+    <div className="w-full px-2 py-4">
+      <Range
+        values={values}
+        step={step}
+        min={min}
+        max={max}
+        onChange={(vals) => onChange([vals[0], vals[1]])}
+        renderTrack={({ props, children }) => (
+          <div
+            onMouseDown={props.onMouseDown}
+            onTouchStart={props.onTouchStart}
+            className="w-full h-10 flex items-center"
+          >
+            <div
+              ref={props.ref}
+              className="w-full h-2 rounded bg-amber-100 relative"
+              style={{
+                background: getTrackBackground({
+                  values,
+                  colors: ['#fcd34d', '#f59e0b', '#fcd34d'],
+                  min,
+                  max,
+                }),
+              }}
+            >
+              {children}
+            </div>
+          </div>
+        )}
+        renderThumb={(params: IRenderThumbParams) => (
+          <div
+            {...params.props}
+            key={params.index} // ✅ Key applied correctly
+            className="h-4 w-4 rounded-full bg-amber-500 shadow cursor-pointer relative flex items-center justify-center"
+          >
+            <div className="absolute top-5 text-xs text-amber-800 font-medium whitespace-nowrap">
+              {params.value}
+            </div>
+          </div>
+        )}
+      />
     </div>
   );
 };

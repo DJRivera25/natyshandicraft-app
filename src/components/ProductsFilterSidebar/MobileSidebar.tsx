@@ -63,11 +63,11 @@ const MobileSidebar: React.FC<MobileSidebarProps> = ({
 }) => {
   return (
     <aside
-      className={`fixed md:hidden z-50 top-0 left-0 h-screen w-80 max-w-[85vw] bg-gradient-to-b from-white to-amber-50/30 border-r border-amber-200/60 shadow-2xl overflow-y-auto ${
+      className={`fixed md:hidden my-10 z-50 top-0 left-0 h-screen w-72 sm:w-80 max-w-[90vw] bg-gradient-to-b from-white to-amber-50/30 border-r border-amber-200/60 shadow-2xl overflow-y-auto ${
         isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      }`}
+      } transition-transform duration-300 ease-in-out`}
     >
-      <div className="p-6 space-y-6">
+      <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
         <SidebarHeader onReset={onReset} />
 
         <SearchSection
