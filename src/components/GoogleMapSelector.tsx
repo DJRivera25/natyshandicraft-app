@@ -6,7 +6,6 @@ import {
   Circle,
   GoogleMap,
   Marker,
-  useLoadScript,
 } from '@react-google-maps/api';
 import {
   LocateFixed,
@@ -30,6 +29,8 @@ interface Props {
   showSearch: boolean;
   setShowSearch: (val: boolean) => void;
   onClose: () => void;
+  isLoaded: boolean;
+  loadError: unknown;
 }
 
 const GoogleMapSelector: React.FC<Props> = ({
@@ -42,17 +43,13 @@ const GoogleMapSelector: React.FC<Props> = ({
   showSearch,
   setShowSearch,
   onClose,
+  isLoaded,
+  loadError,
 }) => {
   const [pulseRadius, setPulseRadius] = useState(20);
   const [pulseOpacity, setPulseOpacity] = useState(0.2);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
-
-  // Load Google Maps API
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-    libraries: ['places'],
-  });
 
   useEffect(() => {
     let growing = true;

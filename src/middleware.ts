@@ -14,6 +14,7 @@ export async function middleware(request: NextRequest) {
 
   const isLoginPage = pathname.startsWith('/login');
   const isCompleteProfilePage = pathname.startsWith('/complete-profile');
+  const isThankYouPage = pathname.startsWith('/complete-profile/thank-you');
 
   // ✅ Get the session token (works for both encrypted or JWT strategy)
   const token = await getToken({ req: request, secret });
@@ -35,12 +36,12 @@ export async function middleware(request: NextRequest) {
     }
 
     // 🧩 Incomplete profile -> must go to /complete-profile
-    if (missingFields && !isCompleteProfilePage) {
+    if (missingFields && !isCompleteProfilePage && !isThankYouPage) {
       return NextResponse.redirect(new URL('/complete-profile', request.url));
     }
 
     // ✅ Profile already complete but trying to go to /complete-profile
-    if (!missingFields && isCompleteProfilePage) {
+    if (!missingFields && isCompleteProfilePage && !isThankYouPage) {
       return NextResponse.redirect(new URL('/profile', request.url));
     }
 

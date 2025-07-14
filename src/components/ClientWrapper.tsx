@@ -17,6 +17,7 @@ export default function ClientWrapper({
   const isHomePage = pathname === '/';
   const isLoginPage = pathname === '/login';
   const isCompleteProfilePage = pathname === '/complete-profile';
+  const isThankYouPage = pathname === '/complete-profile/thank-you';
   const isProductDetailPage = /^\/products\/[^/]+$/.test(pathname); // e.g. /products/abc123
 
   useEffect(() => {
@@ -28,6 +29,7 @@ export default function ClientWrapper({
       <Navbar />
       {!isLoginPage &&
         !isCompleteProfilePage &&
+        !isThankYouPage &&
         !isHomePage &&
         !isProductDetailPage && (
           <div className="pt-4 px-4 md:px-6">

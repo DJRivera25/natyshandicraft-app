@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { Upload, X, Plus, Trash2, Star, Tag } from 'lucide-react';
 import { uploadImage } from '@/utils/api/uploadImage';
 import { apiCreateProduct } from '@/utils/api/products';
+import { useToast } from '@/components/Toast';
 import type { CreateProductInput } from '@/types/product';
 
 interface Props {
@@ -116,6 +117,7 @@ interface CheckboxFieldConfig {
 }
 
 export default function AddProductModal({ isOpen, onClose }: Props) {
+  const { showToast } = useToast();
   const [formData, setFormData] = useState<CreateProductInput>({
     name: '',
     price: 0,
@@ -299,10 +301,11 @@ export default function AddProductModal({ isOpen, onClose }: Props) {
       setImageFile(null);
       setPreviewUrl(null);
       setTagInput('');
+      showToast('success', 'Product created successfully!');
       onClose();
     } catch (error) {
       console.error('Failed to create product:', error);
-      alert('Failed to add product. Please try again.');
+      showToast('error', 'Failed to add product. Please try again.');
     } finally {
       setLoading(false);
     }

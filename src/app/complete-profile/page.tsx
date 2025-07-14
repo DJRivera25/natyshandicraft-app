@@ -3,7 +3,7 @@
 import { useAppDispatch } from '@/store/hooks';
 import { updateProfile } from '@/features/auth/authSlice';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { updateUserProfile } from '@/utils/api/user';
 import type { Address } from '@/types/user';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,6 +15,7 @@ import { useJsApiLoader } from '@react-google-maps/api';
 import GoogleMapSelector from '@/components/GoogleMapSelector';
 import { useSession } from 'next-auth/react';
 import { AxiosError } from 'axios';
+import { useToast } from '@/components/Toast';
 import {
   Calendar,
   Phone,
@@ -40,6 +41,7 @@ export default function CompleteProfilePage() {
   const { update } = useSession();
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { showToast } = useToast();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [markerPosition, setMarkerPosition] = useState(defaultLatLng);
@@ -103,11 +105,20 @@ export default function CompleteProfilePage() {
       );
 
       setSuccess('Profile updated successfully!');
+      showToast(
+        'success',
+        "Profile completed successfully! Welcome to Naty's Handicraft!"
+      );
       await update(); // Refresh session
+
+      // Set flag for thank you page access
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem('profileJustCompleted', 'true');
+      }
 
       // Redirect after a brief delay to show success message
       setTimeout(() => {
-        router.replace('/');
+        router.replace('/complete-profile/thank-you');
       }, 1500);
     } catch (err: unknown) {
       const axiosError = err as AxiosError<{ message: string }>;
@@ -117,42 +128,51 @@ export default function CompleteProfilePage() {
         (err instanceof Error ? err.message : 'An unknown error occurred');
 
       if (message.includes('Mobile number is already in use')) {
-        setError('Mobile number is already associated with another account.');
+        const errorMsg =
+          'Mobile number is already associated with another account.';
+        setError(errorMsg);
+        showToast('error', errorMsg);
       } else if (message.includes('at least 18 years old')) {
-        setError('You must be at least 18 years old to continue.');
+        const errorMsg = 'You must be at least 18 years old to continue.';
+        setError(errorMsg);
+        showToast('error', errorMsg);
       } else {
         setError(message);
+        showToast('error', message);
       }
     }
   };
 
-  const reverseGeocode = (lat: number, lng: number) => {
-    const geocoder = new google.maps.Geocoder();
-    geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-      if (status === 'OK' && results && results[0]) {
-        const place = results[0];
-        const getComp = (type: string) =>
-          place.address_components?.find((c) => c.types.includes(type))
-            ?.long_name ?? '';
+  const reverseGeocode = useCallback(
+    (lat: number, lng: number) => {
+      const geocoder = new google.maps.Geocoder();
+      geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+        if (status === 'OK' && results && results[0]) {
+          const place = results[0];
+          const getComp = (type: string) =>
+            place.address_components?.find((c) => c.types.includes(type))
+              ?.long_name ?? '';
 
-        const streetNumber = getComp('street_number');
-        const route = getComp('route');
-        const city = getComp('locality');
-        const province = getComp('administrative_area_level_1');
-        const postalCode = getComp('postal_code');
-        const country = getComp('country');
+          const streetNumber = getComp('street_number');
+          const route = getComp('route');
+          const city = getComp('locality');
+          const province = getComp('administrative_area_level_1');
+          const postalCode = getComp('postal_code');
+          const country = getComp('country');
 
-        setValue(
-          'address.street',
-          [streetNumber, route].filter(Boolean).join(' ')
-        );
-        setValue('address.city', city);
-        setValue('address.province', province);
-        setValue('address.postalCode', postalCode);
-        setValue('address.country', country);
-      }
-    });
-  };
+          setValue(
+            'address.street',
+            [streetNumber, route].filter(Boolean).join(' ')
+          );
+          setValue('address.city', city);
+          setValue('address.province', province);
+          setValue('address.postalCode', postalCode);
+          setValue('address.country', country);
+        }
+      });
+    },
+    [setValue]
+  );
 
   useEffect(() => {
     if (showMap && navigator.geolocation) {
@@ -180,7 +200,7 @@ export default function CompleteProfilePage() {
         }
       );
     }
-  }, [showMap]);
+  }, [showMap, mapRef, reverseGeocode]);
 
   return (
     <PageWrapper>
@@ -272,7 +292,7 @@ export default function CompleteProfilePage() {
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                   {/* Birthdate */}
                   <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-gray-700 flex items-center gap-1">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
                       <Calendar className="w-3 h-3 text-amber-500" />
                       Birthdate <span className="text-red-500">*</span>
                     </label>
@@ -292,11 +312,24 @@ export default function CompleteProfilePage() {
                         Birthdate is required
                       </p>
                     )}
+                    <div className="flex items-start gap-2 p-2 bg-blue-50 border border-blue-200 rounded-lg">
+                      <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-xs text-blue-700">
+                        <p className="font-medium mb-1">
+                          Why we need your birthdate:
+                        </p>
+                        <ul className="space-y-1">
+                          <li>• Age verification (must be 18+)</li>
+                          <li>• Personalized birthday offers</li>
+                          <li>• Account security verification</li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
 
                   {/* Mobile Number */}
                   <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-gray-700 flex items-center gap-1">
+                    <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
                       <Phone className="w-3 h-3 text-amber-500" />
                       Mobile Number <span className="text-red-500">*</span>
                     </label>
@@ -317,6 +350,19 @@ export default function CompleteProfilePage() {
                         {errors.mobileNumber.message}
                       </p>
                     )}
+                    <div className="flex items-start gap-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+                      <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-xs text-green-700">
+                        <p className="font-medium mb-1">
+                          Mobile number benefits:
+                        </p>
+                        <ul className="space-y-1">
+                          <li>• Order status updates via SMS</li>
+                          <li>• Delivery notifications</li>
+                          <li>• Account recovery options</li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -329,6 +375,38 @@ export default function CompleteProfilePage() {
                     <MapPin className="w-3 h-3 text-green-500" />
                     Address Details
                   </h3>
+                </div>
+
+                {/* Address Information Card */}
+                <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                  <MapPin className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-amber-800">
+                    <p className="font-medium mb-2">
+                      Shipping Address Information:
+                    </p>
+                    <ul className="space-y-1 text-xs">
+                      <li>
+                        • <strong>Street:</strong> Your complete street address
+                      </li>
+                      <li>
+                        • <strong>City:</strong> Your city or municipality
+                      </li>
+                      <li>
+                        • <strong>Province:</strong> Your province or region
+                      </li>
+                      <li>
+                        • <strong>Postal Code:</strong> Your area&apos;s postal
+                        code
+                      </li>
+                      <li>
+                        • <strong>Country:</strong> Philippines (pre-filled)
+                      </li>
+                    </ul>
+                    <p className="mt-2 text-xs font-medium">
+                      💡 Tip: Use the map below to automatically fill your
+                      address details!
+                    </p>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -399,6 +477,8 @@ export default function CompleteProfilePage() {
                       setMapRef={setMapRef}
                       reverseGeocode={reverseGeocode}
                       onClose={() => setShowMap(false)}
+                      isLoaded={isLoaded}
+                      loadError={undefined} // TODO: pass actual loadError if available from useJsApiLoader
                     />
                   </motion.div>
                 )}
