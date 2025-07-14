@@ -35,3 +35,8 @@ export const updateUserRoles = async (
   const res = await axios.patch(`/admin/users/${userId}`, roles);
   return res.data.user;
 };
+
+export const getUserById = async (id: string) => {
+  const res = await axios.get(`/user/${id}`);
+  return res.data.user;
+};

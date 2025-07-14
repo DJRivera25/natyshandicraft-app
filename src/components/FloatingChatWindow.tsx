@@ -3,6 +3,7 @@ import { useChat } from './ChatProvider';
 import { X, Send, Smile, Loader2, MessageCircle } from 'lucide-react';
 import { createChatRoom } from '@/utils/api/chat';
 import { getChatSupportAdmin } from '@/utils/api/user';
+import { useSession } from 'next-auth/react';
 
 function useDraggable(ref: React.RefObject<HTMLDivElement>) {
   useEffect(() => {
@@ -63,12 +64,20 @@ export default function FloatingChatWindow({
   const chatRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   useDraggable(chatRef as React.RefObject<HTMLDivElement>);
+  const { data: session } = useSession();
+  const isTypingRef = useRef(false);
 
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages]);
+
+  useEffect(() => {
+    if (!activeRoom && chatRooms && chatRooms.length === 1) {
+      setActiveRoom(chatRooms[0]);
+    }
+  }, [activeRoom, chatRooms, setActiveRoom]);
 
   // Show Messenger-like welcome if showWelcome is true and no messages
   if (showWelcome) {
@@ -148,6 +157,20 @@ export default function FloatingChatWindow({
     setTyping(activeRoom._id, false);
   };
 
+  const handleFocus = () => {
+    if (activeRoom && !isTypingRef.current) {
+      setTyping(activeRoom._id, true);
+      isTypingRef.current = true;
+    }
+  };
+
+  const handleBlur = () => {
+    if (activeRoom && isTypingRef.current) {
+      setTyping(activeRoom._id, false);
+      isTypingRef.current = false;
+    }
+  };
+
   return (
     <div className="fixed z-[100] right-4 bottom-4 sm:right-8 sm:bottom-8 max-w-full flex flex-col items-end">
       <div
@@ -176,26 +199,31 @@ export default function FloatingChatWindow({
               No messages yet. Say hello!
             </div>
           ) : (
-            messages.map((msg) => (
-              <div
-                key={msg._id}
-                className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}
-              >
+            messages.map((msg) => {
+              const isMe = msg.sender === session?.user?.id;
+              return (
                 <div
-                  className={`rounded-xl px-4 py-2 max-w-[70%] text-sm shadow-md ${msg.sender === 'me' ? 'bg-amber-500 text-white' : 'bg-white text-amber-900 border border-amber-100'}`}
+                  key={msg._id}
+                  className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}
                 >
-                  {msg.content}
-                  {msg.read && (
-                    <span className="ml-2 text-xs text-green-500 align-bottom">
-                      ✓✓
-                    </span>
-                  )}
+                  <div
+                    className={`rounded-xl px-4 py-2 max-w-[70%] text-sm shadow-md ${isMe ? 'bg-amber-500 text-white' : 'bg-white text-amber-900 border border-amber-100'}`}
+                  >
+                    {msg.content}
+                    {msg.read && isMe && (
+                      <span className="ml-2 text-xs text-green-500 align-bottom">
+                        ✓✓
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
           {/* Typing indicator */}
-          {Object.values(typingUsers).some(Boolean) && (
+          {Object.entries(typingUsers).some(
+            ([userId, isTyping]) => isTyping && userId !== session?.user?.id
+          ) && (
             <div className="flex items-center gap-2 text-xs text-amber-500 animate-pulse">
               <Smile className="w-4 h-4" /> Someone is typing...
             </div>
@@ -211,9 +239,9 @@ export default function FloatingChatWindow({
             value={input}
             onChange={(e) => {
               setInput(e.target.value);
-              setTyping(activeRoom._id, true);
             }}
-            onBlur={() => setTyping(activeRoom._id, false)}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSend();
             }}

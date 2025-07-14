@@ -5,6 +5,7 @@ import { useChat } from '@/components/ChatProvider';
 import { User, MessageCircle, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import AdminButton from '@/components/AdminButton';
+import { getUserById } from '@/utils/api/user';
 
 function timeAgo(date: string) {
   const d = new Date(date);
@@ -32,12 +33,63 @@ export default function AdminChatPage() {
   const [sending, setSending] = React.useState(false);
   const chatRef = React.useRef<HTMLDivElement>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const [userNames, setUserNames] = React.useState<Record<string, string>>({});
+  const typingTimeout = React.useRef<NodeJS.Timeout | null>(null);
+  const isTypingRef = React.useRef(false);
+
+  const handleFocus = () => {
+    if (activeRoom && !isTypingRef.current) {
+      setTyping(activeRoom._id, true);
+      isTypingRef.current = true;
+    }
+  };
+
+  const handleBlur = () => {
+    if (activeRoom && isTypingRef.current) {
+      setTyping(activeRoom._id, false);
+      isTypingRef.current = false;
+    }
+  };
+
+  // Helper to fetch and cache user names
+  const fetchUserName = React.useCallback(
+    async (userId: string) => {
+      if (!userId || userNames[userId]) return;
+      try {
+        const user = await getUserById(userId);
+        setUserNames((prev) => ({
+          ...prev,
+          [userId]: user.fullName || user.email || userId,
+        }));
+      } catch {
+        setUserNames((prev) => ({ ...prev, [userId]: userId }));
+      }
+    },
+    [userNames]
+  );
+
+  // Fetch names for all participants (except admin) in chatRooms
+  React.useEffect(() => {
+    chatRooms.forEach((room) => {
+      room.participants.forEach((p) => {
+        if (p !== session?.user?.id && !userNames[p]) {
+          fetchUserName(p);
+        }
+      });
+    });
+  }, [chatRooms, session?.user?.id, userNames, fetchUserName]);
 
   React.useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages, activeRoom]);
+
+  React.useEffect(() => {
+    return () => {
+      if (typingTimeout.current) clearTimeout(typingTimeout.current);
+    };
+  }, []);
 
   if (!isAdmin) {
     return (
@@ -73,6 +125,7 @@ export default function AdminChatPage() {
               const user = room.participants.find(
                 (p) => p !== session?.user?.id
               );
+              const userName = user ? userNames[user] || 'Loading...' : 'User';
               return (
                 <button
                   key={room._id}
@@ -84,7 +137,7 @@ export default function AdminChatPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-amber-900 font-medium truncate">
-                      {user || 'User'}
+                      {userName}
                     </div>
                     <div className="text-xs text-amber-700 truncate">
                       {last ? last.content : 'No messages yet.'}
@@ -125,9 +178,12 @@ export default function AdminChatPage() {
               <div className="flex items-center gap-2">
                 <User className="w-6 h-6 text-amber-500" />
                 <span className="font-semibold text-amber-900 text-base">
-                  {activeRoom.participants.find(
-                    (p) => p !== session?.user?.id
-                  ) || 'User'}
+                  {(() => {
+                    const user = activeRoom.participants.find(
+                      (p) => p !== session?.user?.id
+                    );
+                    return user ? userNames[user] || 'Loading...' : 'User';
+                  })()}
                 </span>
               </div>
               <button
@@ -168,7 +224,9 @@ export default function AdminChatPage() {
                 ))
               )}
               {/* Typing indicator */}
-              {Object.values(typingUsers).some(Boolean) && (
+              {Object.entries(typingUsers).some(
+                ([userId, isTyping]) => isTyping && userId !== session?.user?.id
+              ) && (
                 <div className="flex items-center gap-2 text-xs text-amber-500 animate-pulse">
                   <span>Someone is typing...</span>
                 </div>
@@ -194,9 +252,9 @@ export default function AdminChatPage() {
                 value={input}
                 onChange={(e) => {
                   setInput(e.target.value);
-                  setTyping(activeRoom._id, true);
                 }}
-                onBlur={() => setTyping(activeRoom._id, false)}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
                 disabled={sending}
               />
               <AdminButton
