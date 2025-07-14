@@ -13,6 +13,7 @@ interface SpecialFeatures {
   isFeatured?: boolean;
   discountActive?: boolean;
   inStock?: boolean;
+  isBestSeller?: boolean;
 }
 
 interface DesktopSidebarProps {

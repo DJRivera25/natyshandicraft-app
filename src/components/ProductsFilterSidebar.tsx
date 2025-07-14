@@ -8,6 +8,7 @@ import {
   DesktopSidebar,
 } from './ProductsFilterSidebar/index';
 import { useDebounce } from '@/hooks/useDebounce';
+import type { SpecialFeatures } from './ProductsFilterSidebar/SpecialFeaturesFilter';
 
 interface ProductSidebarProps {
   onSearchChange: (value: string) => void;
@@ -17,11 +18,7 @@ interface ProductSidebarProps {
   isSidebarOpen: boolean;
   setIsSidebarOpen: (val: boolean) => void;
   categories: string[];
-  onSpecialFeaturesChange?: (features: {
-    isFeatured?: boolean;
-    discountActive?: boolean;
-    inStock?: boolean;
-  }) => void;
+  onSpecialFeaturesChange?: (features: SpecialFeatures) => void;
 }
 
 const ProductSidebar: React.FC<ProductSidebarProps> = ({
@@ -50,12 +47,7 @@ const ProductSidebar: React.FC<ProductSidebarProps> = ({
   });
 
   // Special features state
-  const [specialFeatures, setSpecialFeatures] = useState<{
-    isFeatured?: boolean;
-    discountActive?: boolean;
-    inStock?: boolean;
-    isBestSeller?: boolean;
-  }>({});
+  const [specialFeatures, setSpecialFeatures] = useState<SpecialFeatures>({});
 
   // Debounced search effect
   useEffect(() => {

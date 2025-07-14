@@ -3,7 +3,7 @@
 import React from 'react';
 import { Star, ChevronDown, TrendingUp, Package } from 'lucide-react';
 
-interface SpecialFeatures {
+export interface SpecialFeatures {
   isFeatured?: boolean;
   discountActive?: boolean;
   inStock?: boolean;
