@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { Product } from '@/models/Product';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 
-export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function PATCH(
+  req: NextRequest,
+  props: { params: Promise<{ id: string }> }
+) {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user?.isAdmin) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
   const params = await props.params;
   try {
     await connectDB();

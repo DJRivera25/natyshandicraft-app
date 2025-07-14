@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { Product } from '@/models/Product';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/authOptions';
 
 // Helper to check for invalid numbers
 const isInvalidNumber = (value: unknown): boolean => {
@@ -48,6 +50,10 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(request: Request) {
+  const session = await getServerSession(authOptions);
+  if (!session || !session.user?.isAdmin) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
   try {
     await connectDB();
     const body: Record<string, unknown> = await request.json();

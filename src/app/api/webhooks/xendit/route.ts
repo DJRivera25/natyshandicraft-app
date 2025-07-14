@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db';
 import { Payment } from '@/models/Payment';
 import { Order, IOrderItem } from '@/models/Order';
 import { Product } from '@/models/Product';
+import { createNotification } from '@/lib/createNotification';
 
 interface XenditWebhookPayload {
   id: string;
@@ -17,8 +18,19 @@ interface OrderUpdateData {
   paymentMethod?: string;
 }
 
+function isValidXenditSignature(req: NextRequest): boolean {
+  // Example: Xendit sends a callback token in the header 'x-callback-token'
+  const expectedToken = process.env.XENDIT_CALLBACK_TOKEN;
+  const receivedToken = req.headers.get('x-callback-token');
+  return !!expectedToken && receivedToken === expectedToken;
+}
+
 export async function POST(req: NextRequest) {
   console.log('✅ Webhook route HIT by Xendit');
+
+  if (!isValidXenditSignature(req)) {
+    return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
+  }
 
   try {
     await connectDB();
@@ -87,13 +99,34 @@ export async function POST(req: NextRequest) {
       orderUpdateData
     );
 
+    // 🟢 Create admin notification for order paid
+    if (status === 'paid' && updatedOrder) {
+      try {
+        await createNotification({
+          type: 'order_paid',
+          message: `Order #${updatedOrder._id} has been paid by ${updatedOrder.user?.fullName || updatedOrder.user?.email || 'a customer'}`,
+          meta: {
+            orderId: updatedOrder._id,
+            userId: updatedOrder.user?._id || updatedOrder.user,
+            totalAmount: updatedOrder.totalAmount,
+            paymentMethod: updatedOrder.paymentMethod,
+          },
+        });
+      } catch (err) {
+        console.error(
+          'Failed to create admin notification for order paid:',
+          err
+        );
+      }
+    }
+
     // 🆕 Update product sold quantities when payment is successful
     if (status === 'paid' && updatedOrder) {
       try {
         // Update sold quantities for all products in the order
         const updatePromises = updatedOrder.items.map(
           async (item: IOrderItem) => {
-            await Product.findByIdAndUpdate(
+            const updatedProduct = await Product.findByIdAndUpdate(
               item.product,
               {
                 $inc: {
@@ -103,6 +136,34 @@ export async function POST(req: NextRequest) {
               },
               { new: true, runValidators: true }
             );
+
+            // Out of stock / low stock notifications
+            if (updatedProduct) {
+              if (updatedProduct.stock === 0) {
+                await createNotification({
+                  type: 'out_of_stock',
+                  message: `Product "${updatedProduct.name}" is now out of stock.`,
+                  meta: {
+                    productId: updatedProduct._id,
+                    name: updatedProduct.name,
+                    stock: updatedProduct.stock,
+                  },
+                });
+              } else if (
+                updatedProduct.stock > 0 &&
+                updatedProduct.stock <= 5
+              ) {
+                await createNotification({
+                  type: 'low_stock',
+                  message: `Product "${updatedProduct.name}" is low on stock (${updatedProduct.stock} left).`,
+                  meta: {
+                    productId: updatedProduct._id,
+                    name: updatedProduct.name,
+                    stock: updatedProduct.stock,
+                  },
+                });
+              }
+            }
           }
         );
 

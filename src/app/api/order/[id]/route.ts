@@ -4,6 +4,7 @@ import { Order } from '@/models/Order';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { Types } from 'mongoose';
+import { createNotification } from '@/lib/createNotification';
 
 // ✅ Use official App Router type for context
 export async function GET(
@@ -110,6 +111,23 @@ export async function PATCH(
     order.status = 'cancelled';
     order.cancelledAt = new Date();
     await order.save();
+
+    // 🟢 Create admin notification for order cancellation
+    try {
+      await createNotification({
+        type: 'order_cancel',
+        message: `Order #${order._id} cancelled by ${session.user.name || session.user.email}`,
+        meta: {
+          orderId: order._id,
+          userId: session.user.id,
+        },
+      });
+    } catch (err) {
+      console.error(
+        'Failed to create admin notification for order cancellation:',
+        err
+      );
+    }
 
     return NextResponse.json(
       {

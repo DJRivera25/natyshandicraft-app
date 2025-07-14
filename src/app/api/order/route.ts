@@ -6,6 +6,7 @@ import { Product } from '@/models/Product';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { Types } from 'mongoose';
+import { createNotification } from '@/lib/createNotification';
 
 export async function POST(req: NextRequest) {
   await connectDB();
@@ -88,7 +89,7 @@ export async function POST(req: NextRequest) {
       try {
         // Update sold quantities for all products in the order
         const updatePromises = orderItems.map(async (item) => {
-          await Product.findByIdAndUpdate(
+          const updatedProduct = await Product.findByIdAndUpdate(
             item.product,
             {
               $inc: {
@@ -98,6 +99,31 @@ export async function POST(req: NextRequest) {
             },
             { new: true, runValidators: true }
           );
+
+          // Out of stock / low stock notifications
+          if (updatedProduct) {
+            if (updatedProduct.stock === 0) {
+              await createNotification({
+                type: 'out_of_stock',
+                message: `Product "${updatedProduct.name}" is now out of stock.`,
+                meta: {
+                  productId: updatedProduct._id,
+                  name: updatedProduct.name,
+                  stock: updatedProduct.stock,
+                },
+              });
+            } else if (updatedProduct.stock > 0 && updatedProduct.stock <= 5) {
+              await createNotification({
+                type: 'low_stock',
+                message: `Product "${updatedProduct.name}" is low on stock (${updatedProduct.stock} left).`,
+                meta: {
+                  productId: updatedProduct._id,
+                  name: updatedProduct.name,
+                  stock: updatedProduct.stock,
+                },
+              });
+            }
+          }
         });
 
         await Promise.all(updatePromises);
@@ -111,6 +137,21 @@ export async function POST(req: NextRequest) {
         );
         // Don't fail the order creation if product updates fail
       }
+    }
+
+    // 🟢 Create admin notification for new order
+    try {
+      await createNotification({
+        type: 'order_checkout',
+        message: `New order placed by ${session.user.name || session.user.email} (Order #${order._id})`,
+        meta: {
+          orderId: order._id,
+          userId: session.user.id,
+          totalAmount: order.totalAmount,
+        },
+      });
+    } catch (err) {
+      console.error('Failed to create admin notification for new order:', err);
     }
 
     const cart = await Cart.findOne({ user: session.user.id });
