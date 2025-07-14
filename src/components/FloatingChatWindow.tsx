@@ -58,6 +58,7 @@ export default function FloatingChatWindow({
     setTyping,
     setActiveRoom,
     chatRooms,
+    markMessageAsRead,
   } = useChat();
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
@@ -78,6 +79,17 @@ export default function FloatingChatWindow({
       setActiveRoom(chatRooms[0]);
     }
   }, [activeRoom, chatRooms, setActiveRoom]);
+
+  useEffect(() => {
+    if (activeRoom && messages.length > 0) {
+      messages.forEach((msg) => {
+        if (!msg.read && msg.sender !== session?.user?.id) {
+          // Only mark as read if not already read and not sent by the user
+          markMessageAsRead(msg._id);
+        }
+      });
+    }
+  }, [activeRoom, messages, session?.user?.id, markMessageAsRead]);
 
   // Show Messenger-like welcome if showWelcome is true and no messages
   if (showWelcome) {

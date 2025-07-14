@@ -28,6 +28,7 @@ export default function AdminChatPage() {
     sendMessage,
     typingUsers,
     setTyping,
+    markMessageAsRead,
   } = useChat();
   const [input, setInput] = React.useState('');
   const [sending, setSending] = React.useState(false);
@@ -84,6 +85,17 @@ export default function AdminChatPage() {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages, activeRoom]);
+
+  React.useEffect(() => {
+    if (activeRoom && messages.length > 0) {
+      messages.forEach((msg) => {
+        if (!msg.read && msg.sender !== session?.user?.id) {
+          // Only mark as read if not already read and not sent by the admin
+          markMessageAsRead(msg._id);
+        }
+      });
+    }
+  }, [activeRoom, messages, session?.user?.id, markMessageAsRead]);
 
   React.useEffect(() => {
     return () => {
