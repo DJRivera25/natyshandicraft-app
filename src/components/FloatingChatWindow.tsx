@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useChat } from './ChatProvider';
-import { X, Send, Smile, Loader2 } from 'lucide-react';
+import { X, Send, Smile, Loader2, MessageCircle } from 'lucide-react';
+import { createChatRoom } from '@/utils/api/chat';
+import { getChatSupportAdmin } from '@/utils/api/user';
 
 function useDraggable(ref: React.RefObject<HTMLDivElement>) {
   useEffect(() => {
@@ -42,11 +44,20 @@ function useDraggable(ref: React.RefObject<HTMLDivElement>) {
 
 export default function FloatingChatWindow({
   onClose,
+  showWelcome = false,
 }: {
   onClose: () => void;
+  showWelcome?: boolean;
 }) {
-  const { activeRoom, messages, sendMessage, typingUsers, setTyping } =
-    useChat();
+  const {
+    activeRoom,
+    messages,
+    sendMessage,
+    typingUsers,
+    setTyping,
+    setActiveRoom,
+    chatRooms,
+  } = useChat();
   const [input, setInput] = useState('');
   const [sending, setSending] = useState(false);
   const chatRef = useRef<HTMLDivElement>(null);
@@ -58,6 +69,73 @@ export default function FloatingChatWindow({
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Show Messenger-like welcome if showWelcome is true and no messages
+  if (showWelcome) {
+    const handleStartConversation = async () => {
+      // Fetch the chat support admin
+      const admin = await getChatSupportAdmin();
+      if (!admin) {
+        alert('No chat support admin available.');
+        return;
+      }
+      // Check if a room already exists with the admin
+      const existingRoom = chatRooms?.find((room) =>
+        room.participants.includes(admin._id)
+      );
+      if (existingRoom) {
+        setActiveRoom(existingRoom);
+        return;
+      }
+      // Create a new chat room with the admin
+      const newRoom = await createChatRoom(admin._id);
+      setActiveRoom(newRoom);
+    };
+    return (
+      <div className="fixed z-[100] right-4 bottom-4 sm:right-8 sm:bottom-8 max-w-full flex flex-col items-end">
+        <div
+          ref={chatRef}
+          className="w-[95vw] max-w-md sm:w-96 bg-white rounded-2xl shadow-2xl border border-amber-100 flex flex-col overflow-hidden animate-fade-in"
+          style={{ position: 'relative', top: 0, left: 0, touchAction: 'none' }}
+        >
+          <div className="flex items-center justify-between px-4 py-3 border-b border-amber-100 bg-gradient-to-r from-amber-50 to-yellow-50 cursor-move select-none">
+            <span className="font-semibold text-amber-900 text-base flex items-center gap-2">
+              <MessageCircle className="w-5 h-5 text-amber-500" /> Chat with
+              Admin
+            </span>
+            <button
+              className="p-1 rounded-full hover:bg-amber-100"
+              aria-label="Close chat"
+              onClick={onClose}
+            >
+              <X className="w-5 h-5 text-amber-500" />
+            </button>
+          </div>
+          <div className="flex-1 flex flex-col items-center justify-center px-6 py-10 bg-amber-50 text-center">
+            <MessageCircle className="w-16 h-16 text-amber-200 mb-4" />
+            <h2 className="text-xl font-bold text-amber-900 mb-2">
+              How can we help you?
+            </h2>
+            <p className="text-amber-700 mb-4">
+              Message our admin for any questions, order concerns, or feedback.
+              We usually reply within a few minutes!
+            </p>
+            <button
+              className="px-6 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-semibold shadow-lg transition-all"
+              onClick={handleStartConversation}
+              autoFocus
+            >
+              Start a Conversation
+            </button>
+          </div>
+        </div>
+        <div
+          className="fixed inset-0 bg-black/30 z-[-1] sm:hidden"
+          onClick={onClose}
+        />
+      </div>
+    );
+  }
 
   if (!activeRoom) return null;
 

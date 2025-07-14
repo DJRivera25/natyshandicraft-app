@@ -29,9 +29,16 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const userId = session.user.id;
-  // List all rooms where the user is a participant
-  const rooms = await ChatRoom.find({ participants: userId }).sort({
-    updatedAt: -1,
-  });
+  const isAdmin = session.user.isAdmin;
+
+  let rooms;
+  if (isAdmin) {
+    // Admins see all chat rooms
+    rooms = await ChatRoom.find({}).sort({ updatedAt: -1 });
+  } else {
+    rooms = await ChatRoom.find({ participants: userId }).sort({
+      updatedAt: -1,
+    });
+  }
   return NextResponse.json({ rooms });
 }

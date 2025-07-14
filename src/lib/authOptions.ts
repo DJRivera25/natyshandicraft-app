@@ -29,6 +29,8 @@ export const authOptions: NextAuthOptions = {
             email: user.email,
             fullName: user.name,
             isAdmin: false,
+            isChatSupport: false, // Ensure field is set
+            isSuperAdmin: false, // Ensure field is set
           });
         }
 

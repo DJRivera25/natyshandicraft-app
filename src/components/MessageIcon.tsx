@@ -2,8 +2,10 @@ import React, { useState, useRef, useEffect } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { useChat } from './ChatProvider';
 import ChatDropdown from './ChatDropdown';
+import { useSession } from 'next-auth/react';
 
 export default function MessageIcon() {
+  const { data: session } = useSession();
   const { unreadCount } = useChat();
   const [open, setOpen] = useState(false);
   const iconRef = useRef<HTMLButtonElement>(null);
@@ -18,6 +20,8 @@ export default function MessageIcon() {
     if (open) document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, [open]);
+
+  if (!session?.user) return null;
 
   return (
     <div className="relative">

@@ -1,40 +1,77 @@
 'use client';
 
-import React, { useState } from 'react';
-import NotificationBell from './NotificationBell';
-import MessageIcon from './MessageIcon';
+import React, { useState, useEffect } from 'react';
 import FloatingChatWindow from './FloatingChatWindow';
 import { useChat } from './ChatProvider';
+import { useSession } from 'next-auth/react';
+import { MessageCircle } from 'lucide-react';
+import Navbar from './Navbar';
+import Breadcrumb from './BreadCrumb';
+import { usePathname } from 'next/navigation';
 
 export default function ClientWrapper({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { activeRoom, setActiveRoom } = useChat();
+  const { activeRoom, setActiveRoom, chatRooms } = useChat();
   const [showChat, setShowChat] = useState(false);
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.isAdmin;
+  const isAuthenticated = !!session?.user;
+  const pathname = usePathname();
+
+  const isHomePage = pathname === '/';
+  const isLoginPage = pathname === '/login';
+  const isCompleteProfilePage = pathname === '/complete-profile';
+  const isThankYouPage = pathname === '/complete-profile/thank-you';
+  const isProductDetailPage = /^\/products\/[^/]+$/.test(pathname);
+  const isAdminPage = pathname.startsWith('/admin');
 
   // Open chat window when a room is selected
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeRoom) setShowChat(true);
   }, [activeRoom]);
 
   return (
     <>
-      {/* Top-right icons (z-50 to float above content) */}
-      <div className="fixed top-4 right-4 sm:top-8 sm:right-8 z-50 flex gap-2">
-        <NotificationBell />
-        <MessageIcon />
-      </div>
-      {children}
-      {/* Floating chat window (bottom-right) */}
-      {showChat && (
-        <FloatingChatWindow
-          onClose={() => {
-            setShowChat(false);
-            setActiveRoom(null);
-          }}
-        />
+      {/* Restore Navbar for user-facing pages */}
+      {!isAdminPage && <Navbar />}
+      {/* Restore Breadcrumb for user-facing pages except special ones */}
+      {!isLoginPage &&
+        !isCompleteProfilePage &&
+        !isThankYouPage &&
+        !isHomePage &&
+        !isProductDetailPage &&
+        !isAdminPage && (
+          <div className="pt-4 px-4 md:px-6">
+            <Breadcrumb />
+          </div>
+        )}
+      <div>{children}</div>
+      {/* Floating chat button for authenticated, non-admin users only */}
+      {isAuthenticated && !isAdmin && (
+        <>
+          <button
+            className="fixed bottom-4 right-4 sm:bottom-8 sm:right-8 z-50 bg-amber-500 hover:bg-amber-600 text-white rounded-full p-4 shadow-lg flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
+            aria-label="Chat with admin"
+            onClick={() => setShowChat(true)}
+            style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)' }}
+          >
+            <MessageCircle className="w-7 h-7" />
+          </button>
+          {showChat && (
+            <FloatingChatWindow
+              onClose={() => {
+                setShowChat(false);
+                setActiveRoom(null);
+              }}
+              showWelcome={
+                !activeRoom && (!chatRooms || chatRooms.length === 0)
+              }
+            />
+          )}
+        </>
       )}
     </>
   );

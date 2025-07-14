@@ -10,6 +10,8 @@ import axios from 'axios';
 import Pagination from '@/components/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Users } from 'lucide-react';
+import { updateUserRoles } from '@/utils/api/user';
+import { useSession } from 'next-auth/react';
 
 interface User {
   id: string;
@@ -19,6 +21,16 @@ interface User {
   status?: 'active' | 'banned';
   createdAt: string;
   mobileNumber?: string;
+  isChatSupport?: boolean;
+  isSuperAdmin?: boolean;
+}
+
+interface SessionUser {
+  id: string;
+  email?: string;
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
+  [key: string]: unknown;
 }
 
 export default function AdminUsersPage() {
@@ -34,6 +46,8 @@ export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const limit = 20;
+  const { data: session } = useSession();
+  const isSuperAdmin = (session?.user as SessionUser)?.isSuperAdmin;
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -262,6 +276,65 @@ export default function AdminUsersPage() {
                 </span>
               </div>
             </div>
+            {isSuperAdmin && (
+              <div className="space-y-2 mt-4 border-t pt-4">
+                <h3 className="font-semibold text-amber-900 text-sm mb-2">
+                  Role Management
+                </h3>
+                <div className="flex flex-col gap-2">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!selectedUser.isAdmin}
+                      onChange={async (e) => {
+                        const updated = await updateUserRoles(selectedUser.id, {
+                          isAdmin: e.target.checked,
+                        });
+                        setSelectedUser(
+                          (u) => u && { ...u, isAdmin: updated.isAdmin }
+                        );
+                        fetchUsers();
+                      }}
+                    />
+                    Admin
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!selectedUser.isChatSupport}
+                      onChange={async (e) => {
+                        const updated = await updateUserRoles(selectedUser.id, {
+                          isChatSupport: e.target.checked,
+                        });
+                        setSelectedUser(
+                          (u) =>
+                            u && { ...u, isChatSupport: updated.isChatSupport }
+                        );
+                        fetchUsers();
+                      }}
+                    />
+                    Chat Support
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={!!selectedUser.isSuperAdmin}
+                      onChange={async (e) => {
+                        const updated = await updateUserRoles(selectedUser.id, {
+                          isSuperAdmin: e.target.checked,
+                        });
+                        setSelectedUser(
+                          (u) =>
+                            u && { ...u, isSuperAdmin: updated.isSuperAdmin }
+                        );
+                        fetchUsers();
+                      }}
+                    />
+                    Super Admin
+                  </label>
+                </div>
+              </div>
+            )}
           </>
         )}
       </AdminModal>
