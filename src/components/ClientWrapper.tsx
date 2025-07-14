@@ -27,7 +27,7 @@ export default function ClientWrapper({
 
   return (
     <>
-      <Navbar />
+      {!isAdminPage && <Navbar />}
       {!isLoginPage &&
         !isCompleteProfilePage &&
         !isThankYouPage &&

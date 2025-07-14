@@ -202,7 +202,7 @@ export default function AdminProductsPage() {
         </AdminButton>
       </div>
       {/* Search/Filter Bar */}
-      <div className="flex flex-wrap gap-2 items-center mb-4">
+      <div className="flex flex-wrap gap-2 items-center mb-4 sm:flex-row flex-col sm:items-center items-stretch">
         <input
           type="text"
           placeholder="Search products..."
@@ -211,7 +211,7 @@ export default function AdminProductsPage() {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 bg-white min-w-[180px]"
+          className="px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 bg-white min-w-[140px] w-full sm:w-auto"
         />
         <select
           value={category}
@@ -219,7 +219,7 @@ export default function AdminProductsPage() {
             setCategory(e.target.value);
             setPage(1);
           }}
-          className="px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 bg-white"
+          className="px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 bg-white w-full sm:w-auto"
         >
           <option value="">All Categories</option>
           {categories.map((cat: string) => (
@@ -234,7 +234,7 @@ export default function AdminProductsPage() {
             setStatus(e.target.value as 'all' | 'active' | 'inactive');
             setPage(1);
           }}
-          className="px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 bg-white"
+          className="px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 bg-white w-full sm:w-auto"
         >
           <option value="all">All Status</option>
           <option value="active">Active</option>
@@ -246,7 +246,7 @@ export default function AdminProductsPage() {
             setStock(e.target.value as 'all' | 'in' | 'low' | 'out');
             setPage(1);
           }}
-          className="px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 bg-white"
+          className="px-3 py-2 border border-amber-200 rounded-lg text-sm focus:ring-amber-500 focus:border-amber-500 bg-white w-full sm:w-auto"
         >
           <option value="all">All Stock</option>
           <option value="in">In Stock</option>
@@ -255,7 +255,7 @@ export default function AdminProductsPage() {
         </select>
       </div>
       {/* Stats Bar */}
-      <div className="flex flex-wrap gap-4 items-center mb-2 text-sm text-gray-700 font-medium">
+      <div className="flex flex-wrap gap-4 items-center mb-2 text-sm text-gray-700 font-medium sm:flex-row flex-col sm:items-center items-stretch">
         <span>
           Products: {products.length}
           {globalProductCount !== null ? ` of ${globalProductCount}` : ''}
@@ -266,7 +266,7 @@ export default function AdminProductsPage() {
           </span>
         )}
       </div>
-      <div className="bg-white rounded-xl shadow p-4 border border-amber-200/60">
+      <div className="bg-white rounded-xl shadow p-2 sm:p-4 border border-amber-200/60">
         {loading ? (
           <AdminLoading message="Loading products..." />
         ) : error ? (
@@ -277,7 +277,8 @@ export default function AdminProductsPage() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Table for md+ screens */}
+            <div className="hidden md:block overflow-x-auto">
               <table className="min-w-full text-xs">
                 <thead>
                   <tr className="bg-amber-50">
@@ -457,6 +458,109 @@ export default function AdminProductsPage() {
                 </tbody>
               </table>
             </div>
+            {/* Card layout for mobile */}
+            <div className="md:hidden flex flex-col gap-3">
+              {products.map((product: Product) => {
+                let stockColor = 'text-green-700 bg-green-100 border-green-200';
+                let stockText = 'In Stock';
+                if (product.stock === 0) {
+                  stockColor = 'text-red-700 bg-red-100 border-red-200';
+                  stockText = 'Out of Stock';
+                } else if (product.stock <= (product.restockThreshold || 5)) {
+                  stockColor =
+                    'text-yellow-700 bg-yellow-100 border-yellow-200';
+                  stockText = 'Low Stock';
+                }
+                return (
+                  <div
+                    key={product._id}
+                    className={`rounded-xl border border-amber-100 bg-amber-50/40 shadow-sm p-3 flex gap-3 items-start ${product.stock === 0 ? 'bg-red-50/40' : product.stock <= (product.restockThreshold || 5) ? 'bg-yellow-50/40' : ''}`}
+                  >
+                    <div className="w-20 h-20 rounded-lg overflow-hidden bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-100 flex-shrink-0">
+                      <Image
+                        src={product.imageUrl || '/placeholder.jpg'}
+                        alt={product.name}
+                        width={80}
+                        height={80}
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-gray-900 truncate">
+                          {product.name}
+                        </span>
+                        {product.isFeatured && (
+                          <Star className="w-4 h-4 text-yellow-400" />
+                        )}
+                        <span className="ml-auto text-xs px-2 py-0.5 rounded-full border bg-white text-amber-700 border-amber-200">
+                          {product.category || 'Uncategorized'}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1 mb-1">
+                        {product.tags?.slice(0, 2).map((tag: string) => (
+                          <span
+                            key={tag}
+                            className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1"
+                          >
+                            <Tag className="w-3 h-3" />
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-amber-700">
+                          ₱{product.price.toLocaleString()}
+                        </span>
+                        {product.discountActive && product.discountPercent && (
+                          <span className="ml-2 text-xs text-red-500 line-through">
+                            ₱{product.price.toLocaleString()}
+                          </span>
+                        )}
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-xs font-semibold ${stockColor}`}
+                        >
+                          <Package className="w-3 h-3" />
+                          {product.stock}
+                          <span className="ml-1">{stockText}</span>
+                        </span>
+                        {product.soldQuantity > 0 && (
+                          <span className="ml-2 inline-flex items-center gap-1 text-xs text-gray-500">
+                            <TrendingUp className="w-3 h-3" />
+                            Sold: {product.soldQuantity}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-2 mt-2 flex-wrap">
+                        <button
+                          className="px-3 py-1 rounded-lg bg-amber-600 text-white text-xs font-semibold hover:bg-amber-700 transition-colors"
+                          onClick={() => setSelectedProduct(product)}
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="px-3 py-1 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200 border border-gray-200 transition-colors"
+                          onClick={() => setRestockProduct(product)}
+                        >
+                          Restock
+                        </button>
+                        <button
+                          className="px-3 py-1 rounded-lg bg-red-500 text-white text-xs font-semibold hover:bg-red-600 transition-colors"
+                          onClick={() => handleDeleteProduct(product)}
+                        >
+                          Delete
+                        </button>
+                        <button
+                          className={`px-3 py-1 rounded-lg text-xs font-semibold border transition-colors ${product.isActive ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-400 border-gray-200'}`}
+                          onClick={() => handleToggleActive(product)}
+                        >
+                          {product.isActive ? 'Active' : 'Inactive'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
             {/* Pagination Controls */}
             <div className="flex justify-center items-center gap-2 mt-2 mb-1 text-xs text-gray-600 font-medium">
               Page {page} of {totalPages}
@@ -489,35 +593,57 @@ export default function AdminProductsPage() {
       {/* Restock Modal */}
       <AdminModal
         open={!!restockProduct}
-        title={`Restock Product: ${restockProduct?.name || ''}`}
+        title="Restock Product"
         onClose={() => {
           setRestockProduct(null);
           resetRestockForm();
         }}
         actions={
-          <>
+          <div className="flex flex-col sm:flex-row gap-2 w-full">
             <button
-              className="px-4 py-2 rounded bg-gray-100 text-gray-700 font-semibold"
+              className="w-full sm:w-auto px-4 py-2 rounded bg-gray-100 text-gray-700 font-semibold"
               onClick={() => {
                 setRestockProduct(null);
                 resetRestockForm();
               }}
               disabled={restockLoading}
+              type="button"
             >
               Cancel
             </button>
             <button
-              className="px-4 py-2 rounded bg-amber-600 text-white font-semibold hover:bg-amber-700 disabled:opacity-50"
+              className="w-full sm:w-auto px-4 py-2 rounded bg-amber-600 text-white font-semibold hover:bg-amber-700 disabled:opacity-50"
               onClick={handleRestockSubmit(handleRestock)}
               disabled={restockLoading}
+              type="submit"
             >
               {restockLoading ? 'Restocking...' : 'Restock'}
             </button>
-          </>
+          </div>
         }
       >
-        <form onSubmit={handleRestockSubmit(handleRestock)}>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+        {/* Custom header for world-class UI/UX */}
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-full flex items-center justify-center">
+            <Package className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-green-900">
+              Restock Product
+            </h2>
+            <p className="text-green-700 text-xs sm:text-sm">
+              Add inventory for{' '}
+              <span className="font-semibold">
+                {restockProduct?.name || ''}
+              </span>
+            </p>
+          </div>
+        </div>
+        <form
+          onSubmit={handleRestockSubmit(handleRestock)}
+          className="space-y-4"
+        >
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Quantity to add
           </label>
           <input

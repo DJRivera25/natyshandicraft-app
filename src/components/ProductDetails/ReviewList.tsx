@@ -107,9 +107,12 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviews, loading, error }) => {
                     <div className="font-semibold text-gray-900">
                       {typeof review.user === 'string'
                         ? `User ${review.user.slice(-4)}`
-                        : review.user.fullName ||
-                          review.user.email ||
-                          `User ${review.user._id.slice(-4)}`}
+                        : review.user &&
+                            (review.user.fullName || review.user.email)
+                          ? review.user.fullName || review.user.email
+                          : review.user && review.user._id
+                            ? `User ${review.user._id.slice(-4)}`
+                            : 'Unknown User'}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <div className="flex gap-0.5">

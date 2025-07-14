@@ -27,14 +27,13 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { useState } from 'react';
-import EditProductModal from './EditProductModal';
 
 interface Props {
   product: Product;
-  onProductUpdate?: (updatedProduct: Product) => void;
+  onEdit?: () => void;
 }
 
-export default function ProductCard({ product, onProductUpdate }: Props) {
+export default function ProductCard({ product, onEdit }: Props) {
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
   const router = useRouter();
@@ -47,7 +46,6 @@ export default function ProductCard({ product, onProductUpdate }: Props) {
   const [isHovered, setIsHovered] = useState(false);
   const [showActions, setShowActions] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -70,7 +68,7 @@ export default function ProductCard({ product, onProductUpdate }: Props) {
   const handleEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     setShowActions(false);
-    setIsEditModalOpen(true);
+    if (onEdit) onEdit();
   };
 
   const handleDelete = async (e: React.MouseEvent) => {
@@ -448,22 +446,6 @@ export default function ProductCard({ product, onProductUpdate }: Props) {
           </div>
         )}
       </div>
-
-      {/* Edit Product Modal */}
-      {isEditModalOpen && (
-        <div onClick={(e) => e.stopPropagation()}>
-          <EditProductModal
-            product={product}
-            onClose={() => setIsEditModalOpen(false)}
-            onSave={(updatedProduct) => {
-              setIsEditModalOpen(false);
-              if (onProductUpdate) {
-                onProductUpdate(updatedProduct as Product);
-              }
-            }}
-          />
-        </div>
-      )}
     </motion.div>
   );
 }

@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import AdminButton from '@/components/AdminButton';
 import AdminLoading from '@/components/AdminLoading';
 import AdminError from '@/components/AdminError';
 import { Package, Users, ShoppingCart, TrendingUp } from 'lucide-react';
 import { apiFetchAllProducts } from '@/utils/api/products';
 import { apiFetchAdminOrders } from '@/utils/api/order';
 import { apiFetchAllUsers } from '@/utils/api/user';
+import AnalyticsSection from './AnalyticsSection';
 
 interface SummaryCardProps {
   title: string;
@@ -101,25 +101,8 @@ export default function AdminDashboardPage() {
         />
       </div>
       {error && <AdminError error={error} />}
-      <div className="bg-white rounded-xl shadow p-6 border border-amber-200/60 mb-6">
-        <h2 className="text-lg font-semibold text-amber-800 mb-2">
-          Quick Actions
-        </h2>
-        <div className="flex flex-wrap gap-4">
-          <AdminButton variant="primary">View Orders</AdminButton>
-          <AdminButton variant="primary">Add Product</AdminButton>
-          <AdminButton variant="outline">Manage Users</AdminButton>
-        </div>
-      </div>
-      <div className="bg-white rounded-xl shadow p-6 border border-amber-200/60">
-        <h2 className="text-lg font-semibold text-amber-800 mb-2">Analytics</h2>
-        <p className="text-gray-700 text-sm mb-2">
-          Analytics and charts will appear here soon.
-        </p>
-        <div className="h-32 flex items-center justify-center text-gray-400">
-          [Charts Placeholder]
-        </div>
-      </div>
+
+      <AnalyticsSection />
     </div>
   );
 }

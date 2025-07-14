@@ -9,6 +9,7 @@ import StatusBadge from '@/components/StatusBadge';
 import axios from 'axios';
 import Pagination from '@/components/Pagination';
 import { useDebounce } from '@/hooks/useDebounce';
+import { Users } from 'lucide-react';
 
 interface User {
   id: string;
@@ -17,6 +18,7 @@ interface User {
   isAdmin: boolean;
   status?: 'active' | 'banned';
   createdAt: string;
+  mobileNumber?: string;
 }
 
 export default function AdminUsersPage() {
@@ -210,27 +212,57 @@ export default function AdminUsersPage() {
         onClose={() => setShowDetails(false)}
       >
         {selectedUser && (
-          <div className="space-y-2 text-sm">
-            <div>
-              <strong>Name:</strong> {selectedUser.fullName}
+          <>
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full flex items-center justify-center">
+                <Users className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-lg font-bold text-amber-900">
+                  User Details
+                </h2>
+                <p className="text-amber-700 text-xs sm:text-sm">
+                  Account information and status
+                </p>
+              </div>
             </div>
-            <div>
-              <strong>Email:</strong> {selectedUser.email}
+            <div className="space-y-4 text-sm max-h-[60vh] overflow-y-auto p-2 sm:p-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-4 h-4 text-amber-600" />
+                <span className="font-semibold text-gray-900">
+                  {selectedUser.fullName}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-700">Email:</span>
+                <span>{selectedUser.email}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-700">
+                  Mobile Number:
+                </span>
+                <span>{selectedUser.mobileNumber || '—'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-700">Role:</span>
+                <span>{selectedUser.isAdmin ? 'Admin' : 'User'}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-700">Status:</span>
+                <StatusBadge
+                  status={
+                    selectedUser.status === 'banned' ? 'banned' : 'active'
+                  }
+                />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-gray-700">Joined:</span>
+                <span>
+                  {new Date(selectedUser.createdAt).toLocaleDateString()}
+                </span>
+              </div>
             </div>
-            <div>
-              <strong>Role:</strong> {selectedUser.isAdmin ? 'Admin' : 'User'}
-            </div>
-            <div>
-              <strong>Status:</strong>{' '}
-              <StatusBadge
-                status={selectedUser.status === 'banned' ? 'banned' : 'active'}
-              />
-            </div>
-            <div>
-              <strong>Joined:</strong>{' '}
-              {new Date(selectedUser.createdAt).toLocaleDateString()}
-            </div>
-          </div>
+          </>
         )}
       </AdminModal>
     </div>

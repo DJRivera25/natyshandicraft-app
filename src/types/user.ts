@@ -27,3 +27,10 @@ export interface UpdateProfileInput {
 export interface UserWithId extends User {
   _id: string;
 }
+
+// For admin/analytics: includes meta fields from backend
+export interface UserWithMeta extends User {
+  _id: string;
+  createdAt: string;
+  status?: 'active' | 'banned';
+}

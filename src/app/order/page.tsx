@@ -8,7 +8,6 @@ import { createOrderThunk } from '@/features/order/orderThunk';
 import type { CreateOrderInput } from '@/types/order';
 import { apiCreateXenditInvoice } from '@/utils/api/xendit';
 import {
-  Pencil,
   ArrowLeft,
   Package,
   CreditCard,
@@ -327,39 +326,49 @@ export default function CheckoutPage() {
                         Confirmed
                       </div>
                     )}
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => router.push('/profile')}
-                      className="flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-700 rounded-lg hover:bg-amber-100 transition-all text-sm font-medium"
-                    >
-                      <Pencil className="w-3 h-3" />
-                      Edit Profile
-                    </motion.button>
                   </div>
                 </div>
 
-                {/* Address Display */}
+                {/* Address Display (replace with editable fields) */}
                 <div className="bg-gray-50 rounded-lg p-4 mb-4">
                   <div className="flex items-start gap-3">
                     <User className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                    <div className="text-sm text-gray-700">
+                    <div className="text-sm text-gray-700 w-full">
                       <p className="font-medium text-gray-900 mb-1">
                         {user?.fullName}
                       </p>
-                      <p className="text-gray-600">
-                        {[
-                          address.street,
-                          address.city,
-                          address.province,
-                          address.postalCode,
-                          address.country,
-                        ]
-                          .filter(Boolean)
-                          .join(', ')}
-                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {(
+                          [
+                            ['street', 'Street Address'],
+                            ['city', 'City/Municipality'],
+                            ['province', 'Province'],
+                            ['postalCode', 'Postal Code'],
+                            ['country', 'Country'],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <div key={key} className="space-y-1">
+                            <label className="block text-xs font-medium text-gray-600">
+                              {label}
+                              <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                              type="text"
+                              value={address[key as keyof typeof address]}
+                              onChange={(e) =>
+                                setAddress((prev) => ({
+                                  ...prev,
+                                  [key as keyof typeof address]: e.target.value,
+                                }))
+                              }
+                              placeholder={`Enter ${label.toLowerCase()}`}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent transition-all text-sm"
+                            />
+                          </div>
+                        ))}
+                      </div>
                       {user?.mobileNumber && (
-                        <p className="text-gray-600 mt-1 flex items-center gap-1">
+                        <p className="text-gray-600 mt-2 flex items-center gap-1">
                           <Phone className="w-3 h-3" />
                           {user.mobileNumber}
                         </p>

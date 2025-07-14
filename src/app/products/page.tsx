@@ -24,6 +24,8 @@ import {
   ChevronRight,
   ChevronDown,
 } from 'lucide-react';
+import EditProductModal from '@/components/EditProductModal';
+import type { Product } from '@/types/product';
 
 export default function ProductsPage() {
   const hasMounted = useHasMounted();
@@ -54,6 +56,7 @@ export default function ProductsPage() {
 
   // Mobile search internal state
   const [mobileSearchInput, setMobileSearchInput] = useState('');
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   useEffect(() => {
     dispatch(fetchCategoriesThunk());
@@ -451,7 +454,7 @@ export default function ProductsPage() {
                           >
                             <ProductCard
                               product={product}
-                              onProductUpdate={handleProductUpdate}
+                              onEdit={() => setEditingProduct(product)}
                             />
                           </motion.div>
                         ))}
@@ -525,6 +528,16 @@ export default function ProductsPage() {
         <AddProductModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
+        />
+      )}
+      {editingProduct && (
+        <EditProductModal
+          product={editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onSave={() => {
+            setEditingProduct(null);
+            handleProductUpdate();
+          }}
         />
       )}
     </>
