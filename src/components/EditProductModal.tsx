@@ -13,6 +13,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import type { UpdateProductInput, Product } from '@/types/product';
+import { uploadImage } from '@/utils/api/uploadImage';
 
 interface Props {
   product: Product;
@@ -157,6 +158,7 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
   const [isPerspectiveDragOver, setIsPerspectiveDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const perspectiveFileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (product) {
@@ -302,9 +304,18 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave({ ...formData, imageFile });
+    setUploading(true);
+    try {
+      let imageUrl = formData.imageUrl;
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+      }
+      onSave({ ...formData, imageUrl });
+    } finally {
+      setUploading(false);
+    }
   };
 
   // Render input field based on configuration
@@ -746,14 +757,16 @@ export default function EditProductModal({ product, onClose, onSave }: Props) {
               type="button"
               onClick={onClose}
               className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs"
+              disabled={uploading}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="px-4 py-1.5 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium text-xs"
+              disabled={uploading}
             >
-              Save Changes
+              {uploading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>

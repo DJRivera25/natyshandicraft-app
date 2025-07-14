@@ -19,6 +19,7 @@ export default function ClientWrapper({
   const isCompleteProfilePage = pathname === '/complete-profile';
   const isThankYouPage = pathname === '/complete-profile/thank-you';
   const isProductDetailPage = /^\/products\/[^/]+$/.test(pathname); // e.g. /products/abc123
+  const isAdminPage = pathname.startsWith('/admin');
 
   useEffect(() => {
     AOS.init({ duration: 800, once: true, offset: 80 });
@@ -31,7 +32,8 @@ export default function ClientWrapper({
         !isCompleteProfilePage &&
         !isThankYouPage &&
         !isHomePage &&
-        !isProductDetailPage && (
+        !isProductDetailPage &&
+        !isAdminPage && (
           <div className="pt-4 px-4 md:px-6">
             <Breadcrumb />
           </div>

@@ -27,6 +27,7 @@ export interface Order {
   totalAmount: number;
   paymentMethod?: string;
   paidAt?: string;
+  cancelledAt?: string;
   address: Address;
   location?: Location;
   createdAt: string;

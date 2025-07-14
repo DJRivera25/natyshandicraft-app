@@ -7,6 +7,7 @@ import {
   MobileSidebar,
   DesktopSidebar,
 } from './ProductsFilterSidebar/index';
+import { useDebounce } from '@/hooks/useDebounce';
 
 interface ProductSidebarProps {
   onSearchChange: (value: string) => void;
@@ -35,6 +36,7 @@ const ProductSidebar: React.FC<ProductSidebarProps> = ({
 }) => {
   // Search input state (local, like slider)
   const [searchInput, setSearchInput] = useState('');
+  const debouncedSearchInput = useDebounce(searchInput, 400);
   // Track if user is composing (for IME)
   const [isComposing, setIsComposing] = useState(false);
   // Price range slider state (local, like demo)
@@ -54,6 +56,14 @@ const ProductSidebar: React.FC<ProductSidebarProps> = ({
     inStock?: boolean;
   }>({});
 
+  // Debounced search effect
+  useEffect(() => {
+    if (!isComposing) {
+      onSearchChange(debouncedSearchInput);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearchInput]);
+
   // Prevent body scroll when sidebar is open on mobile
   useEffect(() => {
     if (isSidebarOpen) {
@@ -70,16 +80,8 @@ const ProductSidebar: React.FC<ProductSidebarProps> = ({
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchInput(e.target.value);
   };
-  const handleSearchInputBlur = () => {
-    if (!isComposing) onSearchChange(searchInput);
-  };
-  const handleSearchInputKeyDown = (
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (e.key === 'Enter' && !isComposing) {
-      onSearchChange(searchInput);
-    }
-  };
+  const handleSearchInputBlur = () => {};
+  const handleSearchInputKeyDown = () => {};
   const handleCompositionStart = () => setIsComposing(true);
   const handleCompositionEnd = () => setIsComposing(false);
 

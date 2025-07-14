@@ -7,3 +7,8 @@ export const updateUserProfile = async (
   const res = await axios.post('/user/update-profile/', data);
   return res.data;
 };
+
+export const apiFetchAllUsers = async () => {
+  const res = await axios.get('/admin/users');
+  return res.data;
+};

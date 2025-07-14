@@ -36,3 +36,18 @@ export const apiCancelOrder = async (id: string): Promise<Order> => {
   });
   return response.data.order;
 };
+
+/**
+ * Fetch all orders for admin with pagination and total count.
+ */
+export const apiFetchAdminOrders = async (
+  params: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    status?: string;
+  } = {}
+): Promise<{ orders: Order[]; total: number; page: number; limit: number }> => {
+  const response = await axiosInstance.get('/admin/orders', { params });
+  return response.data;
+};

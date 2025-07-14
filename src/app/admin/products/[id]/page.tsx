@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import BreadCrumb from '@/components/BreadCrumb';
 import ProductDetails from '@/components/ProductDetails';
 import EditProductModal from '@/components/EditProductModal';
 import {
@@ -181,12 +180,6 @@ export default function AdminProductDetailsPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-amber-50 to-white">
       <div className="max-w-7xl mx-auto px-4 py-8">
-        <BreadCrumb
-          customLabels={{ admin: 'Admin', product: 'Products' }}
-          currentTitle={product.name}
-          hideSegments={['[id]']}
-        />
-
         <div className="mt-6 mb-8">
           <button
             onClick={() => router.push('/admin/products')}
