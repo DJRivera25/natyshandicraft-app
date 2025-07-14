@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Notification from '@/models/Notification';
 import { connectDB } from '@/lib/db';
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   await connectDB();
   const { id } = params;
   if (!id) {
