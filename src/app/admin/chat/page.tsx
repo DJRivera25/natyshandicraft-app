@@ -6,6 +6,7 @@ import { User, MessageCircle, X } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import AdminButton from '@/components/AdminButton';
 import { getUserById } from '@/utils/api/user';
+import { format, isValid, parseISO } from 'date-fns';
 
 function timeAgo(date: string) {
   const d = new Date(date);
@@ -114,6 +115,27 @@ export default function AdminChatPage() {
     );
   }
 
+  // Sort chatRooms by latest message
+  const sortedChatRooms = [...chatRooms].sort((a, b) => {
+    const aTime = a.lastMessage?.createdAt
+      ? new Date(a.lastMessage.createdAt).getTime()
+      : 0;
+    const bTime = b.lastMessage?.createdAt
+      ? new Date(b.lastMessage.createdAt).getTime()
+      : 0;
+    return bTime - aTime;
+  });
+
+  let headerDisplayName = 'User';
+  if (activeRoom) {
+    const headerUserId = activeRoom.participants.find(
+      (p) => p !== session?.user?.id
+    );
+    if (headerUserId) {
+      headerDisplayName = userNames[headerUserId] || headerUserId;
+    }
+  }
+
   return (
     <div className="flex flex-col md:flex-row h-[80vh] max-w-6xl mx-auto bg-white rounded-xl shadow border border-amber-200/60 overflow-hidden mt-8">
       {/* Sidebar: Chat Room List */}
@@ -124,20 +146,23 @@ export default function AdminChatPage() {
           </span>
         </div>
         <div className="flex-1 overflow-y-auto divide-y divide-amber-50">
-          {chatRooms.length === 0 ? (
+          {sortedChatRooms.length === 0 ? (
             <div className="p-6 text-center text-amber-700 text-sm flex flex-col items-center gap-2">
               <MessageCircle className="w-8 h-8 text-amber-200 mx-auto" />
               No conversations yet.
             </div>
           ) : (
-            chatRooms.map((room) => {
+            sortedChatRooms.map((room) => {
               const last = room.lastMessage;
               const unread =
                 last && !last.read && last.sender !== session?.user?.id;
-              const user = room.participants.find(
-                (p) => p !== session?.user?.id
+              const otherUserId = room.participants.find(
+                (id) => id !== session?.user?.id
               );
-              const userName = user ? userNames[user] || 'Loading...' : 'User';
+              let displayName = 'User';
+              if (otherUserId) {
+                displayName = userNames[otherUserId] || otherUserId;
+              }
               return (
                 <button
                   key={room._id}
@@ -149,7 +174,7 @@ export default function AdminChatPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm text-amber-900 font-medium truncate">
-                      {userName}
+                      {displayName}
                     </div>
                     <div className="text-xs text-amber-700 truncate">
                       {last ? last.content : 'No messages yet.'}
@@ -190,12 +215,7 @@ export default function AdminChatPage() {
               <div className="flex items-center gap-2">
                 <User className="w-6 h-6 text-amber-500" />
                 <span className="font-semibold text-amber-900 text-base">
-                  {(() => {
-                    const user = activeRoom.participants.find(
-                      (p) => p !== session?.user?.id
-                    );
-                    return user ? userNames[user] || 'Loading...' : 'User';
-                  })()}
+                  {headerDisplayName}
                 </span>
               </div>
               <button
@@ -226,11 +246,23 @@ export default function AdminChatPage() {
                       className={`rounded-xl px-4 py-2 max-w-[70%] text-sm shadow-md ${msg.sender === session?.user?.id ? 'bg-amber-500 text-white' : 'bg-white text-amber-900 border border-amber-100'}`}
                     >
                       {msg.content}
-                      {msg.read && msg.sender === session?.user?.id && (
-                        <span className="ml-2 text-xs text-green-500 align-bottom">
-                          5F8
+                      <div className="flex items-center gap-1 mt-1">
+                        <span className="text-xs text-gray-400">
+                          {(() => {
+                            if (!msg.createdAt) return '—';
+                            const dateObj = parseISO(msg.createdAt);
+                            return isValid(dateObj)
+                              ? format(dateObj, 'PPpp')
+                              : '—';
+                          })()}
                         </span>
-                      )}
+                        {msg.sender === session?.user?.id &&
+                          (msg.read ? (
+                            <span className="ml-1 text-blue-500">✓✓</span>
+                          ) : (
+                            <span className="ml-1 text-gray-400">✓</span>
+                          ))}
+                      </div>
                     </div>
                   </div>
                 ))

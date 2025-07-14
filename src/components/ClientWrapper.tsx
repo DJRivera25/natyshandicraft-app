@@ -42,6 +42,8 @@ export default function ClientWrapper({
     if (activeRoom) setShowChat(true);
   }, [activeRoom]);
 
+  const effectiveUnreadCount = showChat ? 0 : unreadCount;
+
   return (
     <>
       {/* Restore Navbar for user-facing pages */}
@@ -72,9 +74,9 @@ export default function ClientWrapper({
             style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)' }}
           >
             <MessageCircle className="w-7 h-7" />
-            {unreadCount > 0 && (
+            {effectiveUnreadCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full px-1.5 py-0.5 shadow-lg animate-pulse">
-                {unreadCount}
+                {effectiveUnreadCount}
               </span>
             )}
           </button>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useChat } from './ChatProvider';
 import { User, X, MessageCircle } from 'lucide-react';
+import { useSession } from 'next-auth/react';
 
 interface Props {
   onClose: () => void;
@@ -17,7 +18,8 @@ function timeAgo(date: string) {
 }
 
 export default function ChatDropdown({ onClose }: Props) {
-  const { chatRooms, setActiveRoom, activeRoom } = useChat();
+  const { data: session } = useSession();
+  const { chatRooms, setActiveRoom, activeRoom, userNames } = useChat();
 
   return (
     <div className="absolute right-0 mt-2 w-80 max-w-xs sm:w-96 bg-white rounded-2xl shadow-2xl border border-amber-100 z-50 animate-fade-in overflow-hidden">
@@ -41,6 +43,14 @@ export default function ChatDropdown({ onClose }: Props) {
           chatRooms.map((room) => {
             const last = room.lastMessage;
             const unread = last && !last.read && last.sender !== undefined;
+            // When rendering each chat room in the dropdown, get the other user's name
+            const otherUserId = room.participants.find(
+              (id) => id !== session?.user?.id
+            );
+            let displayName = 'User';
+            if (otherUserId) {
+              displayName = userNames[otherUserId] || otherUserId;
+            }
             return (
               <button
                 key={room._id}
@@ -55,7 +65,7 @@ export default function ChatDropdown({ onClose }: Props) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm text-amber-900 font-medium truncate">
-                    {room.participants.length > 1 ? 'Chat' : 'You'}
+                    {displayName}
                   </div>
                   <div className="text-xs text-amber-700 truncate">
                     {last ? last.content : 'No messages yet.'}

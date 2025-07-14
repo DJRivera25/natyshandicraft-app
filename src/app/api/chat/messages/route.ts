@@ -18,5 +18,13 @@ export async function GET(req: NextRequest) {
   const messages = await Message.find({ chatRoom: chatRoomId }).sort({
     createdAt: 1,
   });
-  return NextResponse.json({ messages });
+  // Serialize createdAt to ISO string
+  const serializedMessages = messages.map((msg) => ({
+    ...msg.toObject(),
+    createdAt:
+      msg.createdAt instanceof Date
+        ? msg.createdAt.toISOString()
+        : msg.createdAt,
+  }));
+  return NextResponse.json({ messages: serializedMessages });
 }

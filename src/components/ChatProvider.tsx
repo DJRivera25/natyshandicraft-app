@@ -16,6 +16,7 @@ import {
   markMessageAsRead as markMsgRead,
   setTyping as setTypingApi,
 } from '@/utils/api/chat';
+import { getUserById } from '@/utils/api/user';
 
 interface ChatContextType {
   chatRooms: ChatRoom[];
@@ -29,6 +30,8 @@ interface ChatContextType {
   refetchMessages: (roomId: string) => void;
   typingUsers: Record<string, boolean>;
   setTyping: (roomId: string, isTyping: boolean) => void;
+  userNames: Record<string, string>;
+  fetchUserName: (userId: string) => Promise<void>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -46,6 +49,35 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [typingUsers, setTypingUsers] = useState<Record<string, boolean>>({});
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
+
+  // Helper to fetch and cache user names
+  const fetchUserName = useCallback(
+    async (userId: string) => {
+      if (!userId || userNames[userId]) return;
+      try {
+        const user = await getUserById(userId);
+        setUserNames((prev) => ({
+          ...prev,
+          [userId]: user.fullName || user.email || userId,
+        }));
+      } catch {
+        setUserNames((prev) => ({ ...prev, [userId]: userId }));
+      }
+    },
+    [userNames]
+  );
+
+  // Fetch names for all participants in chatRooms
+  useEffect(() => {
+    const ids = new Set<string>();
+    chatRooms.forEach((room) => {
+      room.participants.forEach((id) => {
+        if (id !== session?.user?.id) ids.add(id);
+      });
+    });
+    ids.forEach((id) => fetchUserName(id));
+  }, [chatRooms, session?.user?.id, fetchUserName]);
 
   const fetchRooms = useCallback(async () => {
     if (!session?.user) return;
@@ -151,6 +183,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         refetchMessages: fetchMessages,
         typingUsers,
         setTyping,
+        userNames,
+        fetchUserName,
       }}
     >
       {children}

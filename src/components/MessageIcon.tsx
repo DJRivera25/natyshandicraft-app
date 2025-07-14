@@ -4,7 +4,11 @@ import { useChat } from './ChatProvider';
 import ChatDropdown from './ChatDropdown';
 import { useSession } from 'next-auth/react';
 
-export default function MessageIcon() {
+export default function MessageIcon({
+  showChat = false,
+}: {
+  showChat?: boolean;
+}) {
   const { data: session } = useSession();
   const { unreadCount } = useChat();
   const [open, setOpen] = useState(false);
@@ -23,6 +27,8 @@ export default function MessageIcon() {
 
   if (!session?.user) return null;
 
+  const effectiveUnreadCount = showChat ? 0 : unreadCount;
+
   return (
     <div className="relative">
       <button
@@ -32,11 +38,11 @@ export default function MessageIcon() {
         onClick={() => setOpen((v) => !v)}
       >
         <MessageCircle
-          className={`w-6 h-6 ${unreadCount > 0 ? 'text-amber-500 animate-bounce' : 'text-gray-400'}`}
+          className={`w-6 h-6 ${effectiveUnreadCount > 0 ? 'text-amber-500 animate-bounce' : 'text-gray-400'}`}
         />
-        {unreadCount > 0 && (
+        {effectiveUnreadCount > 0 && (
           <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-xs font-bold rounded-full px-1.5 py-0.5 shadow-lg animate-pulse">
-            {unreadCount}
+            {effectiveUnreadCount}
           </span>
         )}
       </button>

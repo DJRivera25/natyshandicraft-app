@@ -4,6 +4,7 @@ import { X, Send, Smile, Loader2, MessageCircle } from 'lucide-react';
 import { createChatRoom } from '@/utils/api/chat';
 import { getChatSupportAdmin } from '@/utils/api/user';
 import { useSession } from 'next-auth/react';
+import { format, isValid, parseISO } from 'date-fns';
 
 function useDraggable(ref: React.RefObject<HTMLDivElement>) {
   useEffect(() => {
@@ -111,6 +112,8 @@ export default function FloatingChatWindow({
       // Create a new chat room with the admin
       const newRoom = await createChatRoom(admin._id);
       setActiveRoom(newRoom);
+      // If showWelcome is managed in parent, call onClose and re-open, or trigger a state update
+      // Optionally, force a re-render or notify parent to hide welcome
     };
     return (
       <div className="fixed z-[100] right-4 bottom-4 sm:right-8 sm:bottom-8 max-w-full flex flex-col items-end">
@@ -222,11 +225,23 @@ export default function FloatingChatWindow({
                     className={`rounded-xl px-4 py-2 max-w-[70%] text-sm shadow-md ${isMe ? 'bg-amber-500 text-white' : 'bg-white text-amber-900 border border-amber-100'}`}
                   >
                     {msg.content}
-                    {msg.read && isMe && (
-                      <span className="ml-2 text-xs text-green-500 align-bottom">
-                        ✓✓
+                    <div className="flex items-center gap-1 mt-1">
+                      <span className="text-xs text-gray-400">
+                        {(() => {
+                          if (!msg.createdAt) return '—';
+                          const dateObj = parseISO(msg.createdAt);
+                          return isValid(dateObj)
+                            ? format(dateObj, 'PPpp')
+                            : '—';
+                        })()}
                       </span>
-                    )}
+                      {isMe &&
+                        (msg.read ? (
+                          <span className="ml-1 text-blue-500">✓✓</span>
+                        ) : (
+                          <span className="ml-1 text-gray-400">✓</span>
+                        ))}
+                    </div>
                   </div>
                 </div>
               );

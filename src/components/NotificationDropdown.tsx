@@ -1,10 +1,23 @@
 import React from 'react';
 import { useNotification } from './NotificationProvider';
-import { CheckCircle, AlertCircle, Package, User, X } from 'lucide-react';
+import {
+  CheckCircle,
+  AlertCircle,
+  Package,
+  User,
+  X,
+  Receipt,
+} from 'lucide-react';
 import Link from 'next/link';
 
 interface Props {
   onClose: () => void;
+}
+
+interface NotificationMeta {
+  orderId?: string;
+  link?: string;
+  [key: string]: unknown;
 }
 
 const typeIcon = (type: string) => {
@@ -15,6 +28,8 @@ const typeIcon = (type: string) => {
       return <AlertCircle className="w-5 h-5 text-red-500" />;
     case 'user_registered':
       return <User className="w-5 h-5 text-blue-500" />;
+    case 'order_paid':
+      return <Receipt className="w-5 h-5 text-green-600" />;
     default:
       return <CheckCircle className="w-5 h-5 text-green-500" />;
   }
@@ -60,7 +75,10 @@ export default function NotificationDropdown({ onClose }: Props) {
             >
               <div className="pt-1">{typeIcon(n.type)}</div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm text-amber-900 font-medium truncate">
+                <div
+                  className="text-sm text-amber-900 font-medium truncate"
+                  title={n.message}
+                >
                   {n.message}
                 </div>
                 <div className="text-xs text-amber-500 mt-0.5">
@@ -75,6 +93,16 @@ export default function NotificationDropdown({ onClose }: Props) {
                   Mark as read
                 </button>
               )}
+              {n.type === 'order_paid' &&
+                (n.meta as NotificationMeta)?.orderId && (
+                  <Link
+                    href={`/admin/orders/${(n.meta as NotificationMeta).orderId}`}
+                    className="ml-2 px-2 py-1 text-xs rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 transition"
+                    onClick={onClose}
+                  >
+                    View Order
+                  </Link>
+                )}
               {typeof n.meta?.link === 'string' && (
                 <Link
                   href={n.meta.link}
