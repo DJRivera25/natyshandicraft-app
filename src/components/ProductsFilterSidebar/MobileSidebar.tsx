@@ -5,17 +5,13 @@ import SidebarHeader from './SidebarHeader';
 import SearchSection from './SearchSection';
 import PriceFilter from './PriceFilter';
 import CategoryFilter from './CategoryFilter';
-import SpecialFeaturesFilter from './SpecialFeaturesFilter';
+import SpecialFeaturesFilter, {
+  SpecialFeatures,
+} from './SpecialFeaturesFilter';
 import ResetButton from './ResetButton';
 import ActiveFiltersSummary from './ActiveFiltersSummary';
 
-interface SpecialFeatures {
-  isFeatured?: boolean;
-  discountActive?: boolean;
-  inStock?: boolean;
-}
-
-interface MobileSidebarProps {
+type MobileSidebarProps = {
   isSidebarOpen: boolean;
   searchInput: string;
   onSearchInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -28,8 +24,10 @@ interface MobileSidebarProps {
   categories: string[];
   selectedCategory: string;
   onCategorySelect: (category: string) => void;
-  specialFeatures: SpecialFeatures;
-  onSpecialFeatureToggle: (key: keyof SpecialFeatures) => void;
+  specialFeatures: import('./SpecialFeaturesFilter').SpecialFeatures;
+  onSpecialFeatureToggle: (
+    key: keyof import('./SpecialFeaturesFilter').SpecialFeatures
+  ) => void;
   expandedSections: {
     search: boolean;
     price: boolean;
@@ -40,7 +38,7 @@ interface MobileSidebarProps {
     section: 'search' | 'price' | 'category' | 'features'
   ) => void;
   onReset: () => void;
-}
+};
 
 const MobileSidebar: React.FC<MobileSidebarProps> = ({
   isSidebarOpen,
