@@ -105,26 +105,14 @@ export default function Navbar() {
         <nav className="hidden lg:flex items-center gap-2 xl:gap-4 text-sm font-semibold">
           <Link
             href="/products"
-            className="px-3 py-1.5 rounded-full hover:bg-amber-100/80 focus:bg-amber-200/80 transition text-amber-800"
+            className="relative px-1.5 py-0.5 text-neutral-800 hover:text-amber-700 transition after:content-[''] after:block after:h-0.5 after:bg-amber-400 after:scale-x-0 hover:after:scale-x-100 after:transition-transform after:origin-left after:duration-200"
           >
             Products
-          </Link>
-          <Link
-            href="/products?onSale=true"
-            className="px-3 py-1.5 rounded-full hover:bg-amber-100/80 focus:bg-amber-200/80 transition text-amber-800"
-          >
-            On Sale
-          </Link>
-          <Link
-            href="/products?sortBy=newest"
-            className="px-3 py-1.5 rounded-full hover:bg-amber-100/80 focus:bg-amber-200/80 transition text-amber-800"
-          >
-            New Arrivals
           </Link>
           {isAdmin && (
             <Link
               href="/admin"
-              className="px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-400 to-amber-600 text-white shadow hover:from-amber-500 hover:to-amber-700 transition"
+              className="relative px-1.5 py-0.5 text-amber-700 font-bold border-b-2 border-amber-400"
             >
               Admin
             </Link>
@@ -296,20 +284,6 @@ export default function Navbar() {
                 className="block px-4 py-3 rounded-xl text-lg font-semibold text-amber-900 hover:bg-amber-100 transition"
               >
                 Products
-              </Link>
-              <Link
-                href="/products?onSale=true"
-                onClick={() => setMenuOpen(false)}
-                className="block px-4 py-3 rounded-xl text-lg font-semibold text-amber-900 hover:bg-amber-100 transition"
-              >
-                On Sale
-              </Link>
-              <Link
-                href="/products?sortBy=newest"
-                onClick={() => setMenuOpen(false)}
-                className="block px-4 py-3 rounded-xl text-lg font-semibold text-amber-900 hover:bg-amber-100 transition"
-              >
-                New Arrivals
               </Link>
               {isAdmin && (
                 <Link
