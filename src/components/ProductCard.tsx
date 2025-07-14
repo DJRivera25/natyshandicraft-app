@@ -238,20 +238,22 @@ export default function ProductCard({ product, onProductUpdate }: Props) {
           )}
 
           {/* Stock Status Badge */}
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className={`text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg border flex items-center gap-1 ${
-              stockStatus.color === 'red'
-                ? 'bg-red-500 border-red-200'
-                : stockStatus.color === 'yellow'
-                  ? 'bg-yellow-500 border-yellow-200'
-                  : 'bg-green-500 border-green-200'
-            }`}
-          >
-            <Package size={10} className="sm:w-3" />
-            {stockStatus.text}
-          </motion.div>
+          {(stockStatus.status !== 'low' || isAdmin) && (
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className={`text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg border flex items-center gap-1 ${
+                stockStatus.color === 'red'
+                  ? 'bg-red-500 border-red-200'
+                  : stockStatus.color === 'yellow'
+                    ? 'bg-yellow-500 border-yellow-200'
+                    : 'bg-green-500 border-green-200'
+              }`}
+            >
+              <Package size={10} className="sm:w-3" />
+              {stockStatus.text}
+            </motion.div>
+          )}
         </div>
 
         {/* Discount Badge */}

@@ -88,6 +88,7 @@ export interface SearchProductsParams {
   isFeatured?: boolean;
   discountActive?: boolean;
   inStock?: boolean;
+  isBestSeller?: boolean;
 }
 
 export async function apiSearchProducts(params: SearchProductsParams): Promise<{

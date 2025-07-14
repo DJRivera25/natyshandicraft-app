@@ -49,6 +49,7 @@ export default function ProductsPage() {
     isFeatured?: boolean;
     discountActive?: boolean;
     inStock?: boolean;
+    isBestSeller?: boolean;
   }>({});
 
   // Mobile search internal state
@@ -116,6 +117,7 @@ export default function ProductsPage() {
       isFeatured?: boolean;
       discountActive?: boolean;
       inStock?: boolean;
+      isBestSeller?: boolean;
     }) => {
       setSpecialFeatures(features);
       setPage(1);

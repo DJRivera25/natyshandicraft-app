@@ -7,6 +7,7 @@ interface SpecialFeatures {
   isFeatured?: boolean;
   discountActive?: boolean;
   inStock?: boolean;
+  isBestSeller?: boolean;
 }
 
 interface SpecialFeaturesFilterProps {
@@ -48,6 +49,31 @@ const SpecialFeaturesFilter: React.FC<SpecialFeaturesFilterProps> = ({
           <div className="space-y-2 sm:space-y-3">
             <button
               className={`w-full flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl border transition-all shadow-sm ${
+                specialFeatures.isBestSeller
+                  ? 'bg-gradient-to-r from-orange-400 to-orange-500 text-white border-orange-400 shadow-lg'
+                  : 'bg-white/90 text-gray-700 border-gray-300 hover:bg-amber-50 hover:border-amber-300'
+              }`}
+              onClick={() => onSpecialFeatureToggle('isBestSeller')}
+            >
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="p-1.5 sm:p-2 bg-gradient-to-br from-orange-400 to-orange-500 rounded-lg">
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                </div>
+                <div>
+                  <div className="text-xs sm:text-sm font-medium">
+                    Best Sellers
+                  </div>
+                  <div className="text-xs text-gray-600 sm:text-gray-500">
+                    Most popular products
+                  </div>
+                </div>
+              </div>
+              <div
+                className={`w-4 h-4 sm:w-5 sm:h-5 border-2 rounded-full transition-all ${specialFeatures.isBestSeller ? 'border-white bg-orange-400' : 'border-gray-300 bg-white'}`}
+              ></div>
+            </button>
+            <button
+              className={`w-full flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl border transition-all shadow-sm ${
                 specialFeatures.isFeatured
                   ? 'bg-gradient-to-r from-yellow-400 to-yellow-500 text-white border-yellow-400 shadow-lg'
                   : 'bg-white/90 text-gray-700 border-gray-300 hover:bg-amber-50 hover:border-amber-300'
@@ -74,13 +100,15 @@ const SpecialFeaturesFilter: React.FC<SpecialFeaturesFilterProps> = ({
             <button
               className={`w-full flex items-center justify-between p-3 sm:p-4 rounded-lg sm:rounded-xl border transition-all shadow-sm ${
                 specialFeatures.discountActive
-                  ? 'bg-gradient-to-r from-green-400 to-green-500 text-white border-green-400 shadow-lg'
+                  ? 'bg-gradient-to-r from-red-500 to-pink-500 text-white border-red-200 shadow-lg'
                   : 'bg-white/90 text-gray-700 border-gray-300 hover:bg-amber-50 hover:border-amber-300'
               }`}
               onClick={() => onSpecialFeatureToggle('discountActive')}
             >
               <div className="flex items-center gap-2 sm:gap-3">
-                <div className="p-1.5 sm:p-2 bg-gradient-to-br from-green-400 to-green-500 rounded-lg">
+                <div
+                  className={`p-1.5 sm:p-2 rounded-lg ${specialFeatures.discountActive ? 'bg-gradient-to-br from-red-500 to-pink-500' : 'bg-gray-200'}`}
+                >
                   <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                 </div>
                 <div>
@@ -91,7 +119,7 @@ const SpecialFeaturesFilter: React.FC<SpecialFeaturesFilterProps> = ({
                 </div>
               </div>
               <div
-                className={`w-4 h-4 sm:w-5 sm:h-5 border-2 rounded-full transition-all ${specialFeatures.discountActive ? 'border-white bg-green-400' : 'border-gray-300 bg-white'}`}
+                className={`w-4 h-4 sm:w-5 sm:h-5 border-2 rounded-full transition-all ${specialFeatures.discountActive ? 'border-white bg-red-500' : 'border-gray-300 bg-white'}`}
               ></div>
             </button>
             <button

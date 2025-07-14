@@ -26,10 +26,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   const tag = searchParams.get('tag')?.trim() ?? '';
   const featured = searchParams.get('isFeatured');
   const inStock = searchParams.get('inStock');
-  const discount = searchParams.get('discount');
+  const discountActive = searchParams.get('discountActive');
   const page = parseInt(searchParams.get('page') ?? '1');
   const limit = parseInt(searchParams.get('limit') ?? '10');
   const sortBy = searchParams.get('sortBy') ?? 'newest';
+  const isBestSeller = searchParams.get('isBestSeller');
 
   const filters: ProductFilter = {
     deletedAt: null,
@@ -69,27 +70,35 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   }
 
   // 💸 Discounted only
-  if (discount === 'true') {
+  if (discountActive === 'true') {
     filters.discountActive = true;
   }
 
   // 🔁 Sorting
   let sort: Record<string, 1 | -1> = { createdAt: -1 };
-  switch (sortBy) {
-    case 'priceAsc':
-      sort = { price: 1 };
-      break;
-    case 'priceDesc':
-      sort = { price: -1 };
-      break;
-    case 'rating':
-      sort = { averageRating: -1 };
-      break;
-    case 'oldest':
-      sort = { createdAt: 1 };
-      break;
-    default:
-      sort = { createdAt: -1 }; // newest
+  if (isBestSeller === 'true') {
+    sort = { soldQuantity: -1 };
+  } else if (featured === 'true') {
+    sort = { isFeatured: -1, createdAt: -1 };
+  } else if (discountActive === 'true') {
+    sort = { discountActive: -1, createdAt: -1 };
+  } else {
+    switch (sortBy) {
+      case 'priceAsc':
+        sort = { price: 1 };
+        break;
+      case 'priceDesc':
+        sort = { price: -1 };
+        break;
+      case 'rating':
+        sort = { averageRating: -1 };
+        break;
+      case 'oldest':
+        sort = { createdAt: 1 };
+        break;
+      default:
+        sort = { createdAt: -1 }; // newest
+    }
   }
 
   try {

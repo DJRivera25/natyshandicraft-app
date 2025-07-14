@@ -54,6 +54,7 @@ const ProductSidebar: React.FC<ProductSidebarProps> = ({
     isFeatured?: boolean;
     discountActive?: boolean;
     inStock?: boolean;
+    isBestSeller?: boolean;
   }>({});
 
   // Debounced search effect
@@ -101,7 +102,7 @@ const ProductSidebar: React.FC<ProductSidebarProps> = ({
 
   // Handler for toggling special features
   const handleSpecialFeatureToggle = (
-    key: 'isFeatured' | 'discountActive' | 'inStock'
+    key: 'isFeatured' | 'discountActive' | 'inStock' | 'isBestSeller'
   ) => {
     setSpecialFeatures((prev) => {
       const next = { ...prev, [key]: !prev[key] };
