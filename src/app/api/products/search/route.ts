@@ -12,6 +12,7 @@ interface ProductFilter {
   isFeatured?: boolean;
   discountActive?: boolean;
   stock?: { $gt?: number };
+  soldQuantity?: { $gt?: number };
 }
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -77,6 +78,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   // 🔁 Sorting
   let sort: Record<string, 1 | -1> = { createdAt: -1 };
   if (isBestSeller === 'true') {
+    filters.soldQuantity = { $gt: 0 };
     sort = { soldQuantity: -1 };
   } else if (featured === 'true') {
     sort = { isFeatured: -1, createdAt: -1 };
