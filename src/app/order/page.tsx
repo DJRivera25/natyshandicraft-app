@@ -55,7 +55,7 @@ export default function CheckoutPage() {
   const [addressConfirmed, setAddressConfirmed] = useState(false);
 
   // Load Google Maps API
-  const { isLoaded } = useJsApiLoader({
+  const { isLoaded, loadError } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
     libraries: ['places'],
   });
@@ -428,6 +428,8 @@ export default function CheckoutPage() {
                         showSearch={showSearch}
                         setShowSearch={setShowSearch}
                         onClose={() => setShowMap(false)}
+                        isLoaded={isLoaded}
+                        loadError={loadError}
                       />
                     </motion.div>
                   )}
