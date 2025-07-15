@@ -9,6 +9,7 @@ interface AdminControlsProps {
   onEdit: () => void;
   onDelete: () => void;
   onToggleActive: () => void;
+  isTogglingActive?: boolean;
 }
 
 const AdminControls: React.FC<AdminControlsProps> = ({
@@ -16,6 +17,7 @@ const AdminControls: React.FC<AdminControlsProps> = ({
   onEdit,
   onDelete,
   onToggleActive,
+  isTogglingActive,
 }) => {
   return (
     <div className="space-y-2 sm:space-y-3 p-2 sm:p-3 bg-gradient-to-br from-blue-50 to-white rounded-lg border border-blue-200">
@@ -35,13 +37,20 @@ const AdminControls: React.FC<AdminControlsProps> = ({
               ? 'bg-yellow-500 text-white hover:bg-yellow-600'
               : 'bg-green-500 text-white hover:bg-green-600'
           }`}
+          disabled={isTogglingActive}
         >
-          {product.isActive ? (
+          {isTogglingActive ? (
+            <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin inline-block"></span>
+          ) : product.isActive ? (
             <EyeOff className="w-3 h-3" />
           ) : (
             <Eye className="w-3 h-3" />
           )}
-          {product.isActive ? 'Hide' : 'Show'}
+          {isTogglingActive
+            ? 'Toggling...'
+            : product.isActive
+              ? 'Hide'
+              : 'Show'}
         </button>
 
         <button

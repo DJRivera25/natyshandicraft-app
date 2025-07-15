@@ -36,6 +36,7 @@ interface ProductDetailsProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onToggleActive?: () => void;
+  isTogglingActive?: boolean;
 }
 
 // Enhanced User type with proper typing
@@ -52,6 +53,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
   onEdit,
   onDelete,
   onToggleActive,
+  isTogglingActive,
 }) => {
   const dispatch = useAppDispatch();
   const { data: session } = useSession();
@@ -286,6 +288,7 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
               onEdit={onEdit || (() => {})}
               onDelete={onDelete || (() => {})}
               onToggleActive={onToggleActive || (() => {})}
+              isTogglingActive={isTogglingActive}
             />
           )}
         </div>
