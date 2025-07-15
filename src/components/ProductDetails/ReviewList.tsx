@@ -89,80 +89,75 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviews, loading, error }) => {
     <div className="space-y-4">
       {/* Reviews Grid - 2 columns on desktop, 1 column on mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
-        {displayedReviews.map((review, index) => (
-          <motion.div
-            key={`${typeof review.user === 'string' ? review.user : review.user._id}-${index}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-4 sm:p-6 border border-gray-200"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <div>
-                    <div className="font-semibold text-gray-900">
-                      {typeof review.user === 'string'
-                        ? `User ${review.user.slice(-4)}`
-                        : review.user &&
-                            (review.user.fullName || review.user.email)
-                          ? review.user.fullName || review.user.email
-                          : review.user && review.user._id
-                            ? `User ${review.user._id.slice(-4)}`
-                            : 'Unknown User'}
+        {displayedReviews.map((review, index) => {
+          // Null check for review.user
+          const userObj = typeof review.user === 'string' ? null : review.user;
+          const userId =
+            typeof review.user === 'string' ? review.user : userObj?._id;
+          return (
+            <motion.div
+              key={`${userId ?? 'unknown'}-${index}`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="bg-gradient-to-br from-gray-50 to-white rounded-2xl p-4 sm:p-6 border border-gray-200"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-amber-400 to-amber-600 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-white" />
                     </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <div className="flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            className={`w-4 h-4 ${
-                              star <= review.rating
-                                ? 'text-yellow-400 fill-current'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        ))}
+                    <div>
+                      <div className="font-semibold text-gray-900">
+                        {typeof review.user === 'string'
+                          ? `User ${review.user.slice(-4)}`
+                          : userObj && (userObj.fullName || userObj.email)
+                            ? userObj.fullName || userObj.email
+                            : userObj && userObj._id
+                              ? `User ${userObj._id.slice(-4)}`
+                              : 'Unknown User'}
                       </div>
-                      <span>•</span>
-                      <span className="flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {new Date(review.createdAt).toLocaleDateString()}
-                      </span>
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-4 h-4 ${
+                                star <= review.rating
+                                  ? 'text-yellow-400 fill-current'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <span>•</span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {new Date(review.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
+
+                  <p className="text-gray-700 leading-relaxed">
+                    {review.comment}
+                  </p>
                 </div>
 
-                <p className="text-gray-700 leading-relaxed">
-                  {review.comment}
-                </p>
+                {(user?.id === userId || user?.isAdmin) && userId && (
+                  <button
+                    onClick={() => handleReviewDelete(userId)}
+                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    title="Delete review"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                )}
               </div>
-
-              {(user?.id ===
-                (typeof review.user === 'string'
-                  ? review.user
-                  : review.user._id) ||
-                user?.isAdmin) && (
-                <button
-                  onClick={() =>
-                    handleReviewDelete(
-                      typeof review.user === 'string'
-                        ? review.user
-                        : review.user._id
-                    )
-                  }
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  title="Delete review"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* View All Reviews Button */}

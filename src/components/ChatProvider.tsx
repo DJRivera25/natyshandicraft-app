@@ -54,15 +54,27 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   // Helper to fetch and cache user names
   const fetchUserName = useCallback(
     async (userId: string) => {
-      if (!userId || userNames[userId]) return;
+      if (
+        !userId ||
+        typeof userId !== 'string' ||
+        userId.trim() === '' ||
+        userNames[userId]
+      )
+        return;
       try {
+        // Debug logging
+        console.log('ChatProvider: Attempting to fetch user by ID:', userId);
         const user = await getUserById(userId);
         setUserNames((prev) => ({
           ...prev,
           [userId]: user.fullName || user.email || userId,
         }));
-      } catch {
-        setUserNames((prev) => ({ ...prev, [userId]: userId }));
+      } catch (err) {
+        console.warn(`Failed to fetch user with id ${userId}:`, err);
+        setUserNames((prev) => ({
+          ...prev,
+          [userId]: `Unknown User (${userId.slice(-4)})`,
+        }));
       }
     },
     [userNames]
