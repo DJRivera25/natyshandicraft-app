@@ -16,14 +16,6 @@ export const metadata = {
       'Handcrafted Filipino products by Lola Naty. Discover unique, traditional, and sustainable crafts for your home and lifestyle.',
     url: 'https://natyshandicraft-app.vercel.app/',
     siteName: "Naty's Handycrafts",
-    images: [
-      {
-        url: '/og-image.png', // <-- Use a real OG image for best results
-        width: 1200,
-        height: 630,
-        alt: "Naty's Handycrafts Social Preview",
-      },
-    ],
     locale: 'en_PH',
     type: 'website',
   },
@@ -32,7 +24,6 @@ export const metadata = {
     title: "Naty's Handycrafts",
     description:
       'Handcrafted Filipino products by Lola Naty. Discover unique, traditional, and sustainable crafts for your home and lifestyle.',
-    images: ['/og-image.png'], // <-- Use the same OG image
     creator: '@natyshandicraft',
     site: '@natyshandicraft',
   },
