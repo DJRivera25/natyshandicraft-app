@@ -150,6 +150,7 @@ export default function AddProductModal({ isOpen, onCloseAction }: Props) {
   const [isPerspectiveDragOver, setIsPerspectiveDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const perspectiveFileInputRef = useRef<HTMLInputElement>(null);
+  const [perspectiveFiles, setPerspectiveFiles] = useState<File[]>([]);
 
   if (!isOpen) return null;
 
@@ -200,8 +201,9 @@ export default function AddProductModal({ isOpen, onCloseAction }: Props) {
   ) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      Array.from(files).forEach((file) => {
-        handleImageUpload(file);
+      setPerspectiveFiles((prev) => {
+        const newFiles = Array.from(files).slice(0, 3 - prev.length);
+        return [...prev, ...newFiles].slice(0, 3);
       });
     }
   };
@@ -223,32 +225,25 @@ export default function AddProductModal({ isOpen, onCloseAction }: Props) {
     }));
   };
 
-  const handlePerspectiveRemove = (perspective: string) => {
+  const handlePerspectiveRemove = (index: number) => {
+    setPerspectiveFiles((prev) => prev.filter((_, i) => i !== index));
     setFormData((prev) => ({
       ...prev,
-      perspectives: (prev.perspectives || []).filter((p) => p !== perspective),
+      perspectives: prev.perspectives.filter((_, i) => i !== index),
     }));
   };
 
-  const handleImageUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const imageUrl = reader.result as string;
-      if (!formData.perspectives?.includes(imageUrl)) {
-        setFormData((prev) => {
-          const currentPerspectives = prev.perspectives || [];
-          // Limit to 3 perspective images
-          if (currentPerspectives.length >= 3) {
-            return prev; // Don't add more if already at limit
-          }
-          return {
-            ...prev,
-            perspectives: [...currentPerspectives, imageUrl],
-          };
-        });
-      }
-    };
-    reader.readAsDataURL(file);
+  const handleImageUpload = async (file: File) => {
+    const imageUrl = await uploadImage(file);
+    setFormData((prev) => {
+      const currentPerspectives = prev.perspectives || [];
+      if (currentPerspectives.length >= 3) return prev;
+      if (currentPerspectives.includes(imageUrl)) return prev;
+      return {
+        ...prev,
+        perspectives: [...currentPerspectives, imageUrl],
+      };
+    });
   };
 
   const handleDragDrop = (
@@ -275,7 +270,16 @@ export default function AddProductModal({ isOpen, onCloseAction }: Props) {
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
       }
-      await apiCreateProduct({ ...formData, imageUrl });
+      // Upload perspective images
+      let perspectiveUrls: string[] = [];
+      if (perspectiveFiles.length > 0) {
+        perspectiveUrls = await Promise.all(perspectiveFiles.map(uploadImage));
+      }
+      await apiCreateProduct({
+        ...formData,
+        imageUrl,
+        perspectives: perspectiveUrls,
+      });
       setFormData({
         name: '',
         price: 0,
@@ -302,6 +306,7 @@ export default function AddProductModal({ isOpen, onCloseAction }: Props) {
       setImageFile(null);
       setPreviewUrl(null);
       setTagInput('');
+      setPerspectiveFiles([]);
       showToast('success', 'Product created successfully!');
       onCloseAction();
     } catch (error) {
@@ -697,7 +702,7 @@ export default function AddProductModal({ isOpen, onCloseAction }: Props) {
                       />
                       <button
                         type="button"
-                        onClick={() => handlePerspectiveRemove(p)}
+                        onClick={() => handlePerspectiveRemove(index)}
                         className="absolute -top-0.5 -right-0.5 bg-red-500 text-white rounded-full w-3 h-3 sm:w-4 sm:h-4 flex items-center justify-center hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
                       >
                         <X className="w-1.5 h-1.5 sm:w-2 sm:h-2" />

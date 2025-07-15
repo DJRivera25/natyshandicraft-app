@@ -166,6 +166,7 @@ export default function EditProductModal({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const perspectiveFileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [perspectiveFiles, setPerspectiveFiles] = useState<File[]>([]);
 
   useEffect(() => {
     if (product) {
@@ -244,8 +245,15 @@ export default function EditProductModal({
   ) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      Array.from(files).forEach((file) => {
-        handleImageUpload(file);
+      setPerspectiveFiles((prev) => {
+        const newFiles = Array.from(files).slice(
+          0,
+          3 - prev.length - (formData.perspectives?.length || 0)
+        );
+        return [...prev, ...newFiles].slice(
+          0,
+          3 - (formData.perspectives?.length || 0)
+        );
       });
     }
   };
@@ -267,32 +275,28 @@ export default function EditProductModal({
     }));
   };
 
-  const handlePerspectiveRemove = (perspective: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      perspectives: (prev.perspectives || []).filter((p) => p !== perspective),
-    }));
+  const handlePerspectiveRemove = (index: number, isExisting: boolean) => {
+    if (isExisting) {
+      setFormData((prev) => ({
+        ...prev,
+        perspectives: prev.perspectives.filter((_, i) => i !== index),
+      }));
+    } else {
+      setPerspectiveFiles((prev) => prev.filter((_, i) => i !== index));
+    }
   };
 
-  const handleImageUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const imageUrl = reader.result as string;
-      if (!formData.perspectives?.includes(imageUrl)) {
-        setFormData((prev) => {
-          const currentPerspectives = prev.perspectives || [];
-          // Limit to 3 perspective images
-          if (currentPerspectives.length >= 3) {
-            return prev; // Don't add more if already at limit
-          }
-          return {
-            ...prev,
-            perspectives: [...currentPerspectives, imageUrl],
-          };
-        });
-      }
-    };
-    reader.readAsDataURL(file);
+  const handleImageUpload = async (file: File) => {
+    const imageUrl = await uploadImage(file);
+    setFormData((prev) => {
+      const currentPerspectives = prev.perspectives || [];
+      if (currentPerspectives.length >= 3) return prev;
+      if (currentPerspectives.includes(imageUrl)) return prev;
+      return {
+        ...prev,
+        perspectives: [...currentPerspectives, imageUrl],
+      };
+    });
   };
 
   const handleDragDrop = (
@@ -319,7 +323,19 @@ export default function EditProductModal({
       if (imageFile) {
         imageUrl = await uploadImage(imageFile);
       }
-      onSaveAction({ ...formData, imageUrl });
+      // Upload new perspective images
+      let newPerspectiveUrls: string[] = [];
+      if (perspectiveFiles.length > 0) {
+        newPerspectiveUrls = await Promise.all(
+          perspectiveFiles.map(uploadImage)
+        );
+      }
+      const allPerspectives = [
+        ...(formData.perspectives || []),
+        ...newPerspectiveUrls,
+      ];
+      onSaveAction({ ...formData, imageUrl, perspectives: allPerspectives });
+      setPerspectiveFiles([]);
     } finally {
       setUploading(false);
     }
@@ -710,7 +726,30 @@ export default function EditProductModal({
                       />
                       <button
                         type="button"
-                        onClick={() => handlePerspectiveRemove(p)}
+                        onClick={() => handlePerspectiveRemove(index, true)}
+                        className="absolute -top-0.5 -right-0.5 bg-red-500 text-white rounded-full w-3 h-3 sm:w-4 sm:h-4 flex items-center justify-center hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                      >
+                        <X className="w-1.5 h-1.5 sm:w-2 sm:h-2" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {perspectiveFiles.length > 0 && (
+                <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
+                  {perspectiveFiles.map((file, index) => (
+                    <div key={index} className="relative group">
+                      <Image
+                        src={URL.createObjectURL(file)}
+                        alt={`New Perspective ${index + 1}`}
+                        width={96}
+                        height={64}
+                        className="w-full h-12 sm:h-16 object-contain rounded-lg bg-gray-50"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handlePerspectiveRemove(index, false)}
                         className="absolute -top-0.5 -right-0.5 bg-red-500 text-white rounded-full w-3 h-3 sm:w-4 sm:h-4 flex items-center justify-center hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
                       >
                         <X className="w-1.5 h-1.5 sm:w-2 sm:h-2" />

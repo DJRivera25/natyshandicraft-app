@@ -21,10 +21,20 @@ export async function GET(req: NextRequest) {
 
     // Redis cache key based on page and limit
     const cacheKey = `products:page:${page}:limit:${limit}`;
+    const start = Date.now();
     const cached = await redis.get(cacheKey);
+    const redisGetTime = Date.now() - start;
     if (cached) {
-      return NextResponse.json(JSON.parse(cached));
+      console.log('CACHE HIT:', cacheKey);
+      console.log('Redis GET took', redisGetTime, 'ms');
+      console.log('Cached data size:', cached.length, 'bytes');
+      const parseStart = Date.now();
+      const parsed = JSON.parse(cached);
+      const parseTime = Date.now() - parseStart;
+      console.log('JSON.parse took', parseTime, 'ms');
+      return NextResponse.json(parsed);
     }
+    console.log('CACHE MISS:', cacheKey);
 
     const [products, total] = await Promise.all([
       Product.find({ deletedAt: null, isActive: true })
@@ -43,6 +53,31 @@ export async function GET(req: NextRequest) {
           : p.price,
     }));
 
+    if (enhancedProducts.length > 0) {
+      console.log(
+        'Sample product size:',
+        JSON.stringify(enhancedProducts[0]).length,
+        'bytes'
+      );
+      console.log('Sample product keys:', Object.keys(enhancedProducts[0]));
+      Object.entries(enhancedProducts[0]).forEach(([key, value]) => {
+        console.log(`${key}: ${JSON.stringify(value).length} bytes`);
+      });
+    }
+
+    enhancedProducts.forEach((product, idx) => {
+      const size = JSON.stringify(product).length;
+      if (size > 2000) {
+        // Arbitrary threshold for 'large' product
+        console.log(
+          `Product at index ${idx} is unusually large: ${size} bytes`,
+          product
+        );
+      } else {
+        console.log(`Product at index ${idx} size: ${size} bytes`);
+      }
+    });
+
     const response = {
       products: enhancedProducts,
       total,
@@ -50,6 +85,7 @@ export async function GET(req: NextRequest) {
       totalPages: Math.ceil(total / limit),
     };
 
+    console.log('Response size:', JSON.stringify(response).length, 'bytes');
     // Cache the response for 60 seconds
     await redis.set(cacheKey, JSON.stringify(response), 'EX', 60);
 
