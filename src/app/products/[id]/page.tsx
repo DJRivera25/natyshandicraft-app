@@ -16,6 +16,43 @@ import { AlertCircle, Package } from 'lucide-react';
 import NewsletterOverlay from '@/components/NewsletterOverlay';
 import Footer from '@/components/Footer';
 import type { UpdateProductInput } from '@/types/product';
+import { Suspense } from 'react';
+import type { Product as ProductType } from '@/types/product';
+
+// Inject JSON-LD structured data for product
+function ProductJsonLd({ product }: { product: ProductType }) {
+  const url = `https://natyshandicraft-app.vercel.app/products/${product._id}`;
+  const image = product.imageUrl || '/og-image.png';
+  const data = {
+    '@context': 'https://schema.org/',
+    '@type': 'Product',
+    name: product.name,
+    image: [image],
+    description: product.description,
+    sku: product.sku,
+    brand: {
+      '@type': 'Brand',
+      name: "Naty's Handycrafts",
+    },
+    offers: {
+      '@type': 'Offer',
+      url,
+      priceCurrency: 'PHP',
+      price: product.price,
+      availability:
+        product.stock > 0
+          ? 'https://schema.org/InStock'
+          : 'https://schema.org/OutOfStock',
+      itemCondition: 'https://schema.org/NewCondition',
+    },
+  };
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
+    />
+  );
+}
 
 export default function ProductDetailPage() {
   const params = useParams() as { id: string };
@@ -164,6 +201,11 @@ export default function ProductDetailPage() {
           onClose={() => setIsEditModalOpen(false)}
           onSave={handleProductUpdate}
         />
+      )}
+      {selectedProduct && (
+        <Suspense fallback={null}>
+          <ProductJsonLd product={selectedProduct} />
+        </Suspense>
       )}
     </>
   );

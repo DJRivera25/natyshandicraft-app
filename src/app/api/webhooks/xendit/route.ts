@@ -19,7 +19,6 @@ interface OrderUpdateData {
 }
 
 function isValidXenditSignature(req: NextRequest): boolean {
-  // Example: Xendit sends a callback token in the header 'x-callback-token'
   const expectedToken = process.env.XENDIT_CALLBACK_TOKEN;
   const receivedToken = req.headers.get('x-callback-token');
   return !!expectedToken && receivedToken === expectedToken;
