@@ -90,6 +90,16 @@ export async function POST(request: Request) {
 
     // Pass all provided fields to Product.create
     const newProduct = await Product.create({ ...body });
+
+    // Invalidate relevant Redis caches
+    await redis.del('categories');
+    const listKeys = await redis.keys('products:page:*');
+    if (listKeys.length) await redis.del(...listKeys);
+    const allKeys = await redis.keys('products:all:page:*');
+    if (allKeys.length) await redis.del(...allKeys);
+    const searchKeys = await redis.keys('search:*');
+    if (searchKeys.length) await redis.del(...searchKeys);
+
     return NextResponse.json(newProduct, { status: 201 });
   } catch (error) {
     return NextResponse.json(

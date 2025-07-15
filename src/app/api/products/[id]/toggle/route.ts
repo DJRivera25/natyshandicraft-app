@@ -3,6 +3,7 @@ import { connectDB } from '@/lib/db';
 import { Product } from '@/models/Product';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
+import redis from '@/lib/redis';
 
 export async function PATCH(
   req: NextRequest,
@@ -56,6 +57,17 @@ export async function PATCH(
     }
 
     await product.save();
+
+    // Invalidate relevant Redis caches
+    await redis.del(`product:${product._id}`);
+    await redis.del('categories');
+    // Invalidate all product list and search caches (wildcard)
+    const listKeys = await redis.keys('products:page:*');
+    if (listKeys.length) await redis.del(...listKeys);
+    const allKeys = await redis.keys('products:all:page:*');
+    if (allKeys.length) await redis.del(...allKeys);
+    const searchKeys = await redis.keys('search:*');
+    if (searchKeys.length) await redis.del(...searchKeys);
 
     return NextResponse.json(
       { message: `${toggle} toggled.` },

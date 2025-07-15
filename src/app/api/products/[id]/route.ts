@@ -66,6 +66,16 @@ export async function PUT(
       );
     }
 
+    // Invalidate relevant Redis caches
+    await redis.del(`product:${id}`);
+    await redis.del('categories');
+    const listKeys = await redis.keys('products:page:*');
+    if (listKeys.length) await redis.del(...listKeys);
+    const allKeys = await redis.keys('products:all:page:*');
+    if (allKeys.length) await redis.del(...allKeys);
+    const searchKeys = await redis.keys('search:*');
+    if (searchKeys.length) await redis.del(...searchKeys);
+
     return NextResponse.json(updated, { status: 200 });
   } catch (error) {
     return NextResponse.json(
@@ -93,6 +103,16 @@ export async function DELETE(
         { status: 404 }
       );
     }
+
+    // Invalidate relevant Redis caches
+    await redis.del(`product:${id}`);
+    await redis.del('categories');
+    const listKeys = await redis.keys('products:page:*');
+    if (listKeys.length) await redis.del(...listKeys);
+    const allKeys = await redis.keys('products:all:page:*');
+    if (allKeys.length) await redis.del(...allKeys);
+    const searchKeys = await redis.keys('search:*');
+    if (searchKeys.length) await redis.del(...searchKeys);
 
     return NextResponse.json(
       { message: 'Product deleted successfully' },
