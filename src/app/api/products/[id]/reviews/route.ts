@@ -5,6 +5,7 @@ import { Order } from '@/models/Order';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { Types } from 'mongoose';
+import redis from '@/lib/redis';
 
 export async function GET(
   req: NextRequest,
@@ -13,6 +14,11 @@ export async function GET(
   const params = await props.params;
   await connectDB();
   const productId = params.id;
+  const cacheKey = `reviews:product:${productId}`;
+  const cached = await redis.get(cacheKey);
+  if (cached) {
+    return NextResponse.json(JSON.parse(cached));
+  }
   if (!Types.ObjectId.isValid(productId)) {
     return NextResponse.json(
       { message: 'Invalid product ID' },
@@ -35,11 +41,13 @@ export async function GET(
           0
         ) / reviewCount
       : 0;
-  return NextResponse.json({
+  const response = {
     reviews,
     reviewCount,
     averageRating: Math.round(averageRating * 100) / 100,
-  });
+  };
+  await redis.set(cacheKey, JSON.stringify(response), 'EX', 60);
+  return NextResponse.json(response);
 }
 
 export async function POST(

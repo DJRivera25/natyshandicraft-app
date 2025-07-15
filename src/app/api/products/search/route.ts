@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { Product } from '@/models/Product';
+import redis from '@/lib/redis';
 
 interface ProductFilter {
   deletedAt?: null;
@@ -19,6 +20,11 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
   await connectDB();
 
   const { searchParams } = new URL(req.url);
+  const cacheKey = `search:${searchParams.toString()}`;
+  const cached = await redis.get(cacheKey);
+  if (cached) {
+    return NextResponse.json(JSON.parse(cached));
+  }
 
   const query = searchParams.get('q')?.trim() ?? '';
   const minPrice = parseFloat(searchParams.get('minPrice') ?? '0');
@@ -111,12 +117,14 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       Product.countDocuments(filters),
     ]);
 
-    return NextResponse.json({
+    const response = {
       products,
       total,
       page,
       totalPages: Math.ceil(total / limit),
-    });
+    };
+    await redis.set(cacheKey, JSON.stringify(response), 'EX', 30);
+    return NextResponse.json(response);
   } catch (error) {
     console.error('Search error:', error);
     return NextResponse.json(

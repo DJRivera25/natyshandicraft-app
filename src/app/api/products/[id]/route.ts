@@ -2,12 +2,21 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/db';
 import { Product } from '@/models/Product';
+import redis from '@/lib/redis';
 
-export async function GET(request: Request, props: { params: Promise<{ id: string }> }) {
+export async function GET(
+  request: Request,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   await connectDB();
 
   const { id } = params;
+  const cacheKey = `product:${id}`;
+  const cached = await redis.get(cacheKey);
+  if (cached) {
+    return NextResponse.json(JSON.parse(cached), { status: 200 });
+  }
 
   if (!id) {
     return NextResponse.json(
@@ -24,6 +33,7 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
         { status: 404 }
       );
     }
+    await redis.set(cacheKey, JSON.stringify(product), 'EX', 60);
     return NextResponse.json(product, { status: 200 });
   } catch (error) {
     return NextResponse.json(
@@ -33,7 +43,10 @@ export async function GET(request: Request, props: { params: Promise<{ id: strin
   }
 }
 
-export async function PUT(request: Request, props: { params: Promise<{ id: string }> }) {
+export async function PUT(
+  request: Request,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   await connectDB();
 
@@ -62,7 +75,10 @@ export async function PUT(request: Request, props: { params: Promise<{ id: strin
   }
 }
 
-export async function DELETE(request: Request, props: { params: Promise<{ id: string }> }) {
+export async function DELETE(
+  request: Request,
+  props: { params: Promise<{ id: string }> }
+) {
   const params = await props.params;
   await connectDB();
 
