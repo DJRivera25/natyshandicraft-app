@@ -2,7 +2,7 @@
 
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { updateProfile } from '@/features/auth/authSlice';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { updateUserProfile } from '@/utils/api/user';
 import { motion } from 'framer-motion';
 import {
@@ -33,16 +33,19 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  const initialForm = {
-    mobileNumber: user?.mobileNumber || '',
-    address: {
-      street: user?.address?.street || '',
-      city: user?.address?.city || '',
-      province: user?.address?.province || '',
-      postalCode: user?.address?.postalCode || '',
-      country: user?.address?.country || 'Philippines',
-    },
-  };
+  const initialForm = useMemo(
+    () => ({
+      mobileNumber: user?.mobileNumber || '',
+      address: {
+        street: user?.address?.street || '',
+        city: user?.address?.city || '',
+        province: user?.address?.province || '',
+        postalCode: user?.address?.postalCode || '',
+        country: user?.address?.country || 'Philippines',
+      },
+    }),
+    [user]
+  );
 
   const [form, setForm] = useState(initialForm);
 

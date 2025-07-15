@@ -2,6 +2,7 @@
 
 import React from 'react';
 import type { Product } from '@/types/product';
+import Image from 'next/image';
 
 interface ProductGalleryProps {
   product: Product;
@@ -25,9 +26,11 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
       {/* Main Image */}
       <div className="w-full h-[300px] sm:h-[350px] md:h-[400px] lg:h-[500px] mb-3 sm:mb-4">
         <div className="w-full h-full flex items-center justify-center">
-          <img
+          <Image
             src={currentImage}
             alt={product.name}
+            width={500}
+            height={500}
             className="max-w-full max-h-full object-contain rounded-xl bg-gradient-to-br from-amber-50 to-white shadow-lg"
             style={{ background: '#f7f7f7' }}
           />
@@ -48,9 +51,11 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
               }`}
               aria-label={`View image ${idx + 1}`}
             >
-              <img
+              <Image
                 src={img}
                 alt={product.name + ' thumbnail'}
+                width={96}
+                height={96}
                 className="object-cover w-full h-full"
               />
             </button>

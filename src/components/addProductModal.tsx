@@ -6,10 +6,11 @@ import { uploadImage } from '@/utils/api/uploadImage';
 import { apiCreateProduct } from '@/utils/api/products';
 import { useToast } from '@/components/Toast';
 import type { CreateProductInput } from '@/types/product';
+import Image from 'next/image';
 
 interface Props {
   isOpen: boolean;
-  onClose: () => void;
+  onCloseAction: () => void;
 }
 
 // Form field configurations for mapping
@@ -116,7 +117,7 @@ interface CheckboxFieldConfig {
   icon?: React.ComponentType<{ className?: string }>;
 }
 
-export default function AddProductModal({ isOpen, onClose }: Props) {
+export default function AddProductModal({ isOpen, onCloseAction }: Props) {
   const { showToast } = useToast();
   const [formData, setFormData] = useState<CreateProductInput>({
     name: '',
@@ -302,7 +303,7 @@ export default function AddProductModal({ isOpen, onClose }: Props) {
       setPreviewUrl(null);
       setTagInput('');
       showToast('success', 'Product created successfully!');
-      onClose();
+      onCloseAction();
     } catch (error) {
       console.error('Failed to create product:', error);
       showToast('error', 'Failed to add product. Please try again.');
@@ -461,9 +462,11 @@ export default function AddProductModal({ isOpen, onClose }: Props) {
             </div>
           ) : preview && showPreview ? (
             <div className="space-y-1">
-              <img
+              <Image
                 src={preview}
                 alt="Preview"
+                width={96}
+                height={64}
                 className="w-full h-12 sm:h-16 object-contain rounded-lg mx-auto bg-gray-50"
               />
               <button
@@ -524,7 +527,7 @@ export default function AddProductModal({ isOpen, onClose }: Props) {
               </p>
             </div>
             <button
-              onClick={onClose}
+              onClick={onCloseAction}
               className="p-1 hover:bg-green-100 rounded-full transition-colors"
             >
               <X className="w-3 h-3 text-green-700" />
@@ -685,9 +688,11 @@ export default function AddProductModal({ isOpen, onClose }: Props) {
                 <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
                   {formData.perspectives.map((p, index) => (
                     <div key={index} className="relative group">
-                      <img
+                      <Image
                         src={p}
                         alt={`Perspective ${index + 1}`}
+                        width={96}
+                        height={64}
                         className="w-full h-12 sm:h-16 object-contain rounded-lg bg-gray-50"
                       />
                       <button
@@ -745,7 +750,7 @@ export default function AddProductModal({ isOpen, onClose }: Props) {
           <div className="flex justify-end gap-2 mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-gray-200 flex-shrink-0">
             <button
               type="button"
-              onClick={onClose}
+              onClick={onCloseAction}
               className="px-3 py-1.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-xs"
             >
               Cancel

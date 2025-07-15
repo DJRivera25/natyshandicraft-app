@@ -202,7 +202,7 @@ export default function AdminProductsPage() {
         </AdminButton>
       </div>
       {/* Search/Filter Bar */}
-      <div className="flex flex-wrap gap-2 items-center mb-4 sm:flex-row flex-col sm:items-center items-stretch">
+      <div className="flex flex-wrap gap-2  mb-4 sm:flex-row flex-col sm:items-center items-stretch">
         <input
           type="text"
           placeholder="Search products..."
@@ -255,7 +255,7 @@ export default function AdminProductsPage() {
         </select>
       </div>
       {/* Stats Bar */}
-      <div className="flex flex-wrap gap-4 items-center mb-2 text-sm text-gray-700 font-medium sm:flex-row flex-col sm:items-center items-stretch">
+      <div className="flex flex-wrap gap-4 mb-2 text-sm text-gray-700 font-medium sm:flex-row flex-col sm:items-center items-stretch">
         <span>
           Products: {products.length}
           {globalProductCount !== null ? ` of ${globalProductCount}` : ''}
@@ -576,7 +576,7 @@ export default function AdminProductsPage() {
       {/* Add Product Modal */}
       <AddProductModal
         isOpen={showAddModal}
-        onClose={() => {
+        onCloseAction={() => {
           setShowAddModal(false);
           fetchProducts();
           fetchGlobalStats();
@@ -586,8 +586,8 @@ export default function AdminProductsPage() {
       {selectedProduct && (
         <EditProductModal
           product={selectedProduct}
-          onClose={() => setSelectedProduct(null)}
-          onSave={handleEditProduct}
+          onCloseAction={() => setSelectedProduct(null)}
+          onSaveAction={handleEditProduct}
         />
       )}
       {/* Restock Modal */}

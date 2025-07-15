@@ -220,8 +220,8 @@ export default function AdminProductDetailsPage() {
         {showModal && (
           <EditProductModal
             product={product}
-            onClose={() => setShowModal(false)}
-            onSave={handleSave}
+            onCloseAction={() => setShowModal(false)}
+            onSaveAction={handleSave}
           />
         )}
 

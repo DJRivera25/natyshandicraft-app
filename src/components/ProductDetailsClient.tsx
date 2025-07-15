@@ -270,8 +270,8 @@ export default function ProductDetailsClient({
       {isEditModalOpen && (
         <EditProductModal
           product={product}
-          onClose={() => setIsEditModalOpen(false)}
-          onSave={handleProductUpdate}
+          onCloseAction={() => setIsEditModalOpen(false)}
+          onSaveAction={handleProductUpdate}
         />
       )}
       <DeleteProductModal

@@ -158,6 +158,7 @@ export default function CheckoutPage() {
     dispatch,
     router,
     showToast,
+    markerPosition,
   ]);
 
   // Get user's current location

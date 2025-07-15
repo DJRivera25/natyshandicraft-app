@@ -139,22 +139,10 @@ export default function ProductCard({ product, onEdit }: Props) {
   const stockStatus = getStockStatus();
 
   return (
-    <motion.div
+    <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={handleViewProduct}
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      whileHover={{
-        y: -8,
-        transition: { type: 'spring', stiffness: 300, damping: 20 },
-      }}
-      transition={{
-        type: 'spring',
-        stiffness: 200,
-        damping: 20,
-        duration: 0.3,
-      }}
       className={`group relative w-full max-w-[280px] sm:max-w-[320px] rounded-xl bg-white border border-gray-200/60 shadow-lg hover:shadow-2xl transition-all duration-300 overflow-hidden cursor-pointer ${
         !product.isActive ? 'opacity-60' : ''
       }`}
@@ -446,6 +434,6 @@ export default function ProductCard({ product, onEdit }: Props) {
           </div>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }

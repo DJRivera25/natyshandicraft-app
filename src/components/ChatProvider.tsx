@@ -164,7 +164,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       });
       pusher.disconnect();
     };
-  }, [session?.user, chatRooms, activeRoom]);
+  }, [session?.user, chatRooms, activeRoom, fetchRooms]);
 
   const sendMessage = async (roomId: string, content: string) => {
     await sendMsg(roomId, content);

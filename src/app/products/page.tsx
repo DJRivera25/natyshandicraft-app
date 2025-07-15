@@ -527,14 +527,14 @@ export default function ProductsPage() {
       {isAdmin && (
         <AddProductModal
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onCloseAction={() => setIsModalOpen(false)}
         />
       )}
       {editingProduct && (
         <EditProductModal
           product={editingProduct}
-          onClose={() => setEditingProduct(null)}
-          onSave={() => {
+          onCloseAction={() => setEditingProduct(null)}
+          onSaveAction={() => {
             setEditingProduct(null);
             handleProductUpdate();
           }}

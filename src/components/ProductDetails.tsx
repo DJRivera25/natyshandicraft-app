@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { fetchReviewsThunk } from '@/features/review/reviewThunk';
@@ -72,14 +72,18 @@ const ProductDetails: React.FC<ProductDetailsProps> = ({
     initialWishlistCount: product.wishlistCount,
   });
 
-  const user: User | null = session?.user
-    ? {
-        id: session.user.id,
-        isAdmin: session.user.isAdmin,
-        fullName: session.user.fullName ?? undefined,
-        email: session.user.email ?? undefined,
-      }
-    : null;
+  const user: User | null = useMemo(
+    () =>
+      session?.user
+        ? {
+            id: session.user.id,
+            isAdmin: session.user.isAdmin,
+            fullName: session.user.fullName ?? undefined,
+            email: session.user.email ?? undefined,
+          }
+        : null,
+    [session?.user]
+  );
 
   const {
     reviews,

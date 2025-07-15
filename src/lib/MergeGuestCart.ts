@@ -55,7 +55,7 @@ export default function MergeGuestCart() {
     };
 
     mergeCart();
-  }, [user?.id, dispatch]);
+  }, [user, user?.id, dispatch]);
 
   return null;
 }

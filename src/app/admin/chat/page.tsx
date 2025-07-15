@@ -99,8 +99,9 @@ export default function AdminChatPage() {
   }, [activeRoom, messages, session?.user?.id, markMessageAsRead]);
 
   React.useEffect(() => {
+    const timeout = typingTimeout.current;
     return () => {
-      if (typingTimeout.current) clearTimeout(typingTimeout.current);
+      if (timeout) clearTimeout(timeout);
     };
   }, []);
 

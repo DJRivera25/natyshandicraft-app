@@ -38,7 +38,7 @@ export async function generateMetadata({
       title,
       description,
       url,
-      siteName: "Naty's Handycrafts",
+      siteName: `Naty's Handycrafts  `,
       images: [
         {
           url: image,

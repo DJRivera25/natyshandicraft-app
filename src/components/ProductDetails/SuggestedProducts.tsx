@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Sparkles, ArrowRight, ArrowLeft, Package } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Product } from '@/types/product';
+import Image from 'next/image';
 
 interface SuggestedProductsProps {
   suggestedProducts: Product[];
@@ -102,9 +103,11 @@ const SuggestedProducts: React.FC<SuggestedProductsProps> = ({
                   >
                     <div className="bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-all duration-300 group-hover:scale-105">
                       <div className="aspect-square bg-gradient-to-br from-gray-50 to-white relative overflow-hidden">
-                        <img
+                        <Image
                           src={suggestedProduct.imageUrl || '/placeholder.jpg'}
                           alt={suggestedProduct.name}
+                          width={300}
+                          height={300}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
 
