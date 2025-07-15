@@ -2,6 +2,11 @@ import { Metadata } from 'next';
 import { Product, IProduct } from '@/models/Product';
 import { connectDB } from '@/lib/db';
 
+const defaultImage =
+  'https://res.cloudinary.com/demo/image/upload/v12345/default-og-image.jpg'; // Replace with your real default image
+const isAbsoluteUrl = (url: string | undefined): boolean =>
+  !!url && /^https?:\/\//.test(url);
+
 export async function generateMetadata({
   params,
 }: {
@@ -18,7 +23,9 @@ export async function generateMetadata({
   }
 
   const url = `https://natyshandicraft-app.vercel.app/products/${params.id}`;
-  const image = product.imageUrl || '/og-image.png';
+  const image = isAbsoluteUrl(product.imageUrl)
+    ? product.imageUrl!
+    : defaultImage;
   const title = product.name;
   const description =
     product.description || 'Discover unique, handcrafted Filipino products.';
@@ -41,7 +48,7 @@ export async function generateMetadata({
         },
       ],
       locale: 'en_PH',
-      type: 'website', // Fix: use allowed OpenGraph type
+      type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
