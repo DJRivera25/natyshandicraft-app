@@ -28,11 +28,13 @@ import PageWrapper from '@/components/PageWrapper';
 import GoogleMapSelector from '@/components/GoogleMapSelector';
 import ProgressTracker from '@/components/ProgressTracker';
 import { useJsApiLoader } from '@react-google-maps/api';
+import { useToast } from '@/components/Toast';
 
 export default function CheckoutPage() {
   const dispatch = useAppDispatch();
   const router = useRouter();
   const hasMounted = useHasMounted();
+  const { showToast } = useToast();
 
   const { items } = useAppSelector((state) => state.cart);
   const user = useAppSelector((state) => state.auth.user);
@@ -118,7 +120,9 @@ export default function CheckoutPage() {
       const order = await dispatch(createOrderThunk(orderData));
 
       if (!order || !('_id' in order)) {
-        throw new Error('Failed to create order');
+        showToast('error', 'No order found. Redirecting to your orders...');
+        router.push('/profile/orders');
+        return;
       }
 
       dispatch(clearCart());
@@ -128,6 +132,7 @@ export default function CheckoutPage() {
         return;
       }
 
+      showToast('info', 'Redirecting to Xendit for payment...');
       const { invoiceURL } = await apiCreateXenditInvoice({
         orderId: order._id,
         userId: user.id,
@@ -144,7 +149,16 @@ export default function CheckoutPage() {
     }
 
     setLoading(false);
-  }, [user, items, address, paymentMethod, totalAmount, dispatch, router]);
+  }, [
+    user,
+    items,
+    address,
+    paymentMethod,
+    totalAmount,
+    dispatch,
+    router,
+    showToast,
+  ]);
 
   // Get user's current location
   const getUserLocation = useCallback(() => {

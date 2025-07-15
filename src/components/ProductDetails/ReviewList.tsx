@@ -90,7 +90,6 @@ const ReviewList: React.FC<ReviewListProps> = ({ reviews, loading, error }) => {
       {/* Reviews Grid - 2 columns on desktop, 1 column on mobile */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
         {displayedReviews.map((review, index) => {
-          // Null check for review.user
           const userObj = typeof review.user === 'string' ? null : review.user;
           const userId =
             typeof review.user === 'string' ? review.user : userObj?._id;

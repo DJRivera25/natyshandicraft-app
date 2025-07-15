@@ -54,11 +54,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Ignored status' }, { status: 200 });
     }
 
+    // Map Xendit status to Payment model status
+    const statusMap: Record<string, string> = {
+      paid: 'succeeded',
+      expired: 'failed',
+      failed: 'failed',
+    };
+    const paymentStatus = statusMap[status] || 'pending';
+
     // 🔄 Update payment document
     const payment = await Payment.findOneAndUpdate(
       { providerPaymentId: xenditInvoiceId },
       {
-        status,
+        status: paymentStatus,
         ...(paymentChannel && { method: paymentChannel }),
         ...(status === 'paid' && { paidAt: new Date() }),
       },
