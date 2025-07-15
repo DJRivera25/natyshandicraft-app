@@ -4,11 +4,12 @@ import ProductDetailsClient from '@/components/ProductDetailsClient';
 import { notFound } from 'next/navigation';
 import type { Product as ProductType } from '@/types/product';
 
-export default async function ProductDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default async function ProductDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+  }
+) {
+  const params = await props.params;
   await connectDB();
   const product = await Product.findById(params.id).lean<ProductType | null>();
   if (!product) return notFound();
