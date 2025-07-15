@@ -229,7 +229,7 @@ export default function AddProductModal({ isOpen, onCloseAction }: Props) {
     setPerspectiveFiles((prev) => prev.filter((_, i) => i !== index));
     setFormData((prev) => ({
       ...prev,
-      perspectives: prev.perspectives.filter((_, i) => i !== index),
+      perspectives: prev.perspectives?.filter((_, i) => i !== index),
     }));
   };
 

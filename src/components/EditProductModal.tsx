@@ -279,7 +279,7 @@ export default function EditProductModal({
     if (isExisting) {
       setFormData((prev) => ({
         ...prev,
-        perspectives: prev.perspectives.filter((_, i) => i !== index),
+        perspectives: prev.perspectives?.filter((_, i) => i !== index),
       }));
     } else {
       setPerspectiveFiles((prev) => prev.filter((_, i) => i !== index));
