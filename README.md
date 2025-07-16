@@ -1,233 +1,287 @@
 # Naty's Handicraft App
 
-A modern, full-featured e-commerce platform for handcrafted Filipino products.
+> **A modern, scalable, and maintainable e-commerce platform for handcrafted Filipino products.**
 
 ---
 
-## 🚀 Features
+## Executive Summary
 
-### 1. Product Catalog
-
-- Browse all products with pagination and filtering
-- Product cards with image, price, stock, and quick actions
-- Product details page with main image and up to 3 perspective images (Cloudinary URLs)
-- Description, tags, category, promo text
-- Pricing, discounts, and stock status
-- Reviews and average rating
-- Add to cart and wishlist actions
-
-**Key Code:**
-
-- `src/components/ProductCard.tsx`, `ProductDetails.tsx`, `ProductDetails/ProductGallery.tsx`
-- `src/app/products/[id]/page.tsx`, `src/app/products/page.tsx`
-- `src/components/addProductModal.tsx`, `EditProductModal.tsx` (image upload logic)
-- `src/app/api/products/` (API routes)
-- **Techniques:** Next.js dynamic routing, Cloudinary image upload, Redux state for product data
+Naty's Handicraft App is a full-stack, cloud-native e-commerce solution designed for growth, maintainability, and developer happiness. It leverages Next.js, MongoDB, Upstash Redis, Cloudinary, and a suite of modern tools to deliver a seamless experience for customers, admins, and developers alike.
 
 ---
 
-### 2. Search & Filtering
+## Feature Matrix
 
-- Search by name, category, price, tags, special features
-- Sidebar filters, active filters summary, reset button
-
-**Key Code:**
-
-- `src/components/ProductsFilterSidebar/`, `ProductsFilterSidebar.tsx`, `ActiveFiltersSummary.tsx`
-- `src/app/products/page.tsx` (search and filter state)
-- `src/app/api/products/search/route.ts` (search API)
-- **Techniques:** Debounced search, Redux state, semantic filtering
-
----
-
-### 3. Cart & Checkout
-
-- Add to cart from product list/details
-- Cart page with item list, quantity selector, remove option
-- Cart summary, checkout, order placement, order success/history
-
-**Key Code:**
-
-- `src/components/Cart/`, `CartItem.tsx`, `CartSummary.tsx`, `AddToCartClient.tsx`
-- `src/app/cart/page.tsx`, `src/app/order/page.tsx`, `src/app/order/success/page.tsx`
-- `src/features/cart/cartSlice.ts`, `cartThunk.ts`
-- **Techniques:** Redux cart state, optimistic UI, order API integration
+| Area                 | Features                                                                            |
+| -------------------- | ----------------------------------------------------------------------------------- |
+| Product Catalog      | Pagination, filtering, search, product details, multi-image (Cloudinary), tags, SEO |
+| Cart & Checkout      | Add/remove, quantity, summary, order placement, order history, Xendit payment       |
+| User Auth/Profile    | Social login (Google/Facebook), profile, address, protected routes                  |
+| Reviews & Ratings    | Verified purchase reviews, ratings, admin moderation                                |
+| Wishlist             | Add/remove, per-user, wishlist count                                                |
+| Admin Dashboard      | Analytics, product/order/user CRUD, status toggles, notifications                   |
+| Notifications        | Real-time (Pusher), admin dropdown, mark as read                                    |
+| Chat & Support       | Real-time user-support chat, typing/read indicators                                 |
+| Performance          | Redis caching, cache invalidation, Next.js Image, code splitting                    |
+| SEO & Metadata       | Dynamic OpenGraph/Twitter, canonical URLs, metadata API                             |
+| Responsive UI        | Mobile-first, accessible, animated, modern UI                                       |
+| Newsletter/Marketing | Newsletter overlay, featured/best-selling/new products                              |
+| Payment              | Xendit integration, webhook handling                                                |
+| Maps                 | Google Maps for address selection                                                   |
 
 ---
 
-### 4. User Authentication & Profile
+## Architecture
 
-- Login with Google/Facebook (NextAuth)
-- User profile page, complete profile flow, validation
-- Profile order history
-
-**Key Code:**
-
-- `src/app/login/page.tsx`, `src/app/profile/page.tsx`, `src/app/complete-profile/page.tsx`
-- `src/features/auth/authSlice.ts`, `authThunk.ts`
-- `src/lib/authOptions.ts` (NextAuth config)
-- **Techniques:** NextAuth, session management, protected routes
-
----
-
-### 5. Reviews & Ratings
-
-- Leave reviews/ratings for purchased products
-- Review list and summary on product details
-- Admin moderation
-
-**Key Code:**
-
-- `src/components/ProductDetails/ReviewForm.tsx`, `ReviewList.tsx`, `ReviewsSection.tsx`, `ReviewSummary.tsx`
-- `src/app/api/products/[id]/reviews/route.ts`
-- `src/features/review/reviewSlice.ts`, `reviewThunk.ts`
-- **Techniques:** Conditional review form, review aggregation, API validation
+```mermaid
+graph TD;
+  User["User (Web/Mobile)"] -->|HTTP/WS| NextJS["Next.js App (API/UI)"]
+  NextJS -->|REST| MongoDB[(MongoDB)]
+  NextJS -->|REST| Redis[(Upstash Redis)]
+  NextJS -->|REST| Cloudinary[(Cloudinary)]
+  NextJS -->|REST| Xendit[(Xendit)]
+  NextJS -->|WS| Pusher[(Pusher)]
+  NextJS -->|REST| GoogleMaps[(Google Maps)]
+  NextJS -->|OAuth| Google[Google Auth]
+  NextJS -->|OAuth| Facebook[Facebook Auth]
+```
 
 ---
 
-### 6. Wishlist
+## Entity Relationship Diagram (ERD)
 
-- Add/remove products to/from wishlist
-- Wishlist count per product, status indicator
+```mermaid
+erDiagram
+  USER {
+    string _id
+    string fullName
+    string email
+    string password
+    string address
+    string mobileNumber
+    boolean isAdmin
+    boolean isChatSupport
+    boolean isSuperAdmin
+    date birthDate
+    string[] wishlist
+  }
 
-**Key Code:**
+  PRODUCT {
+    string _id
+    string name
+    string description
+    string category
+    string imageUrl
+    string[] perspectives
+    number price
+    number discountPercent
+    boolean discountActive
+    number stock
+    number soldQuantity
+    number restockThreshold
+    string sku
+    boolean isActive
+    boolean isFeatured
+    string promoText
+    string[] tags
+    string visibility
+    number views
+    number wishlistCount
+    date createdAt
+    date updatedAt
+    string deletedAt
+    Review[] reviews
+  }
 
-- `src/components/ProductCard.tsx`, `ProductDetails/AdminControls.tsx`
-- `src/app/api/products/[id]/wishlist/route.ts`
-- **Techniques:** User-product relationship, optimistic UI
+  ORDER {
+    string _id
+    string userId
+    OrderItem[] items
+    number totalAmount
+    string paymentMethod
+    string status
+    Address address
+    Location location
+    date createdAt
+    date updatedAt
+  }
 
----
+  ORDER_ITEM {
+    string productId
+    string name
+    number price
+    number quantity
+  }
 
-### 7. Admin Dashboard
+  REVIEW {
+    string _id
+    string user
+    number rating
+    string comment
+    date createdAt
+  }
 
-- Analytics (sales, user growth, top products)
-- Product management (add, edit, delete, toggle status)
-- Order/user management
-- Notification system
+  NOTIFICATION {
+    string _id
+    string type
+    string message
+    string meta
+    string targetAdminId
+    boolean read
+    date createdAt
+  }
 
-**Key Code:**
+  MESSAGE {
+    string _id
+    string chatRoom
+    string sender
+    string content
+    date createdAt
+  }
 
-- `src/app/admin/dashboard/`, `src/app/admin/products/`, `src/app/admin/orders/`, `src/app/admin/users/`
-- `src/components/AdminTable.tsx`, `AdminModal.tsx`, `AdminSidebar.tsx`, `AdminHeader.tsx`
-- `src/app/api/products/`, `orders/`, `users/` (admin API routes)
-- **Techniques:** Role-based access, analytics charts, modal management
+  CHAT_ROOM {
+    string _id
+    string[] users
+    string lastMessage
+    date updatedAt
+  }
 
----
-
-### 8. Notifications
-
-- Real-time notifications for admins
-- Notification dropdown, bell icon, mark as read
-
-**Key Code:**
-
-- `src/components/NotificationBell.tsx`, `NotificationDropdown.tsx`, `NotificationProvider.tsx`
-- `src/app/api/admin/notifications/`
-- `src/lib/pusherClient.ts`, `pusherServer.ts` (real-time)
-- **Techniques:** Pusher real-time events, notification state
-
----
-
-### 9. Chat & Support
-
-- Real-time chat between users and support/admin
-- Chat dropdown, floating chat window, typing indicators
-
-**Key Code:**
-
-- `src/components/ChatProvider.tsx`, `ChatDropdown.tsx`, `FloatingChatWindow.tsx`
-- `src/app/api/chat/`, `chat-support/`
-- **Techniques:** Pusher, chat room state, message read/typing
-
----
-
-### 10. Performance & Caching
-
-- Redis caching for product lists, details, search, categories
-- Cache invalidation on product create/update/delete
-- Optimized image loading (Next.js Image)
-
-**Key Code:**
-
-- `src/lib/redis.ts`, `src/app/api/products/` (caching logic)
-- `src/components/ProductCard.tsx`, `ProductDetails/ProductGallery.tsx` (Next.js Image)
-- **Techniques:** Upstash Redis, cache keys, TTL, invalidation
-
----
-
-### 11. SEO & Metadata
-
-- Dynamic metadata for product pages (OpenGraph, Twitter cards)
-- SEO-friendly URLs, canonical links
-
-**Key Code:**
-
-- `src/app/products/[id]/metadata.ts`, `src/app/layout.tsx`
-- **Techniques:** Next.js metadata API, OpenGraph, Twitter meta
-
----
-
-### 12. Responsive & Modern UI
-
-- Fully responsive design for all devices
-- Modern UI with animations, modals, overlays
-- Accessible components, clear guidance
-
-**Key Code:**
-
-- `src/components/`, `src/app/globals.css`
-- **Techniques:** Tailwind CSS, framer-motion, accessibility best practices
-
----
-
-### 13. Newsletter & Marketing
-
-- Newsletter overlay for engagement
-- Promo text, featured products
-
-**Key Code:**
-
-- `src/components/NewsletterOverlay.tsx`, `FeaturedProducts.tsx`, `BestSellingProducts.tsx`, `NewArrivals.tsx`
-
----
-
-### 14. Payment Integration
-
-- Xendit payment gateway for checkout
-- Webhook handling for payment status
-
-**Key Code:**
-
-- `src/app/api/xendit/route.ts`, `src/app/api/webhooks/xendit/route.ts`
-- **Techniques:** Payment API, webhook security
+  USER ||--o{ ORDER : places
+  USER ||--o{ REVIEW : writes
+  USER ||--o{ NOTIFICATION : receives
+  USER ||--o{ MESSAGE : sends
+  USER ||--o{ CHAT_ROOM : joins
+  USER ||--o{ PRODUCT : wishlist
+  PRODUCT ||--o{ REVIEW : has
+  PRODUCT ||--o{ ORDER_ITEM : in
+  ORDER ||--|{ ORDER_ITEM : contains
+  ORDER_ITEM }o--|| PRODUCT : references
+  CHAT_ROOM ||--o{ MESSAGE : has
+  NOTIFICATION ||--|| USER : targets
+```
 
 ---
 
-### 15. Miscellaneous
+## Tech Stack & Rationale
 
-- Google Maps for address selection: `src/components/GoogleMapSelector.tsx`
-- Progress tracker: `src/components/ProgressTracker.tsx`
-- Toast notifications: `src/components/Toast.tsx`
-
----
-
-## 🛠️ Tech Stack
-
-- Next.js, React, Redux Toolkit
-- MongoDB, Mongoose
-- Upstash Redis, Cloudinary, Xendit, Pusher
-- NextAuth (Google, Facebook)
-- Tailwind CSS, framer-motion
+- **Next.js (App Router):** Modern SSR/SSG, file-based routing, API routes, SEO, and React 18 features.
+- **MongoDB + Mongoose:** Flexible, scalable, and familiar for e-commerce data models.
+- **Upstash Redis:** Serverless, low-latency caching for product data, search, and session state.
+- **Cloudinary:** Best-in-class image upload, transformation, and CDN delivery.
+- **NextAuth:** Secure, extensible authentication with social providers.
+- **Pusher:** Real-time chat and notifications with minimal ops overhead.
+- **Redux Toolkit:** Predictable, scalable state management for complex UI flows.
+- **Tailwind CSS + framer-motion:** Rapid, maintainable, and beautiful UI development.
+- **Xendit:** Modern payment gateway for Southeast Asia.
 
 ---
 
-## 📁 Project Structure
+## Getting Started
 
-- See `/src/app/`, `/src/components/`, `/src/features/`, `/src/models/`, `/src/types/` for more details.
+### 1. Clone & Install
+
+```bash
+git clone https://github.com/yourusername/natyshandicraft-app.git
+cd natyshandicraft-app
+npm install
+```
+
+### 2. Environment Variables
+
+Copy `.env.example` to `.env.local` and fill in:
+
+- `MONGODB_URI`, `UPSTASH_REDIS_URL`, `CLOUDINARY_*`, `NEXTAUTH_*`, `XENDIT_SECRET_KEY`, `PUSHER_*`, etc.
+
+### 3. Run Locally
+
+```bash
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 📚 Contributing & Documentation
+## Deployment
 
-- See code comments and this README for feature and file mapping.
-- For detailed API docs, see `/src/app/api/` and related files.
+- **Recommended:** [Vercel](https://vercel.com/) for zero-config Next.js hosting.
+- Set all environment variables in your deployment dashboard.
+- Use Upstash, Cloudinary, Xendit, and Pusher cloud services for production.
+
+---
+
+## Codebase Conventions
+
+- **TypeScript everywhere:** Strict types for safety and clarity.
+- **Feature-first structure:** Group related logic (UI, API, state) by feature.
+- **API routes:** All backend logic in `/src/app/api/` for discoverability.
+- **Reusable components:** All UI in `/src/components/`, styled with Tailwind.
+- **Redux slices:** One slice per domain (`cartSlice`, `productSlice`, etc.).
+- **Models & Types:** All Mongoose models in `/src/models/`, all TS types in `/src/types/`.
+- **Hooks & Utils:** Custom hooks in `/src/hooks/`, helpers in `/src/utils/`.
+- **Environment config:** Never hardcode secrets; always use env vars.
+
+---
+
+## Extensibility & Best Practices
+
+- **Add new features by feature folder:** UI, API, state, and types together.
+- **API versioning:** Use subfolders in `/api/` for breaking changes.
+- **Testing:** Add unit/integration tests in `/src/tests/` (Jest/React Testing Library recommended).
+- **CI/CD:** Integrate with GitHub Actions or Vercel for auto-deploys and checks.
+- **Monitoring:** Use Vercel Analytics, Upstash metrics, and Cloudinary dashboard.
+- **Security:**
+  - Use HTTPS everywhere.
+  - Validate all API input (server and client).
+  - Use role-based access for admin routes.
+  - Never expose secrets to the client.
+
+---
+
+## Security & Compliance
+
+- **Authentication:** NextAuth with JWT, social login, and session expiry.
+- **Authorization:** Role checks for admin endpoints and UI.
+- **Data validation:** All API endpoints validate input and sanitize output.
+- **Sensitive data:** Never logged or sent to the client.
+- **Payments:** PCI compliance via Xendit; no card data stored on our servers.
+
+---
+
+## Testing
+
+- **Unit tests:** For all business logic and reducers.
+- **Integration tests:** For API routes and critical flows.
+- **E2E tests:** (Recommended) Playwright or Cypress for user journeys.
+- **Manual QA:** Use Vercel preview deployments for PR review.
+
+---
+
+## Challenges & Lessons Learned
+
+- **Image payload bloat:** Solved by uploading all images to Cloudinary and storing only URLs (never base64/data URIs).
+- **Cache invalidation:** Ensured all product mutations (create/update/delete/toggle) clear relevant Redis keys.
+- **Real-time UX:** Used Pusher for chat/notifications, handling auth and connection edge cases.
+- **SEO:** Leveraged Next.js metadata API for dynamic OpenGraph/Twitter tags.
+- **Admin UX:** Built robust modals, tables, and analytics for easy management.
+- **Data consistency:** Used Mongoose for schema validation and Upstash for fast cache.
+- **Security:** Used NextAuth for secure authentication and role-based access control.
+
+---
+
+## Contribution Guidelines
+
+- **Fork and branch:** Always work in a feature branch.
+- **Code style:** Follow Prettier and ESLint rules. Use clear, descriptive names.
+- **Testing:** Add/maintain tests for new features.
+- **Pull requests:** Write clear PR descriptions. Reference issues if relevant.
+- **Discussions:** For major changes, open an issue or discussion first.
+- **Docs:** Update this README and code comments for new features.
+
+---
+
+## Contact & Credits
+
+- Built for the Filipino artisan community, inspired by modern SaaS and e-commerce best practices.
+- Uses open source tools and cloud services for scalability and speed.
+- Maintained by [Your Name/Team].
